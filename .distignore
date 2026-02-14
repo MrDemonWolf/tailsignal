@@ -1,0 +1,15 @@
+/.git
+/.github
+/tests
+/node_modules
+/build
+/.distignore
+/.gitignore
+/.phpunit.result.cache
+/phpunit.xml.dist
+/Makefile
+/CLAUDE.md
+/composer.lock
+/composer.phar
+/.editorconfig
+/.DS_Store

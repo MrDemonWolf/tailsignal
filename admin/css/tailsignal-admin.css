@@ -1,0 +1,96 @@
+/**
+ * TailSignal Admin Styles
+ *
+ * Companion styles for Tailwind CSS (tw- prefix).
+ * Handles elements that Tailwind can't easily cover.
+ */
+
+/* Toggle Switch */
+.tailsignal-toggle {
+	position: relative;
+	display: inline-block;
+	width: 44px;
+	height: 24px;
+}
+
+.tailsignal-toggle input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.tailsignal-toggle-slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	transition: 0.3s;
+	border-radius: 24px;
+}
+
+.tailsignal-toggle-slider::before {
+	position: absolute;
+	content: "";
+	height: 18px;
+	width: 18px;
+	left: 3px;
+	bottom: 3px;
+	background-color: white;
+	transition: 0.3s;
+	border-radius: 50%;
+}
+
+.tailsignal-toggle input:checked + .tailsignal-toggle-slider {
+	background-color: #2271b1;
+}
+
+.tailsignal-toggle input:checked + .tailsignal-toggle-slider::before {
+	transform: translateX(20px);
+}
+
+/* Meta box adjustments */
+.tailsignal-meta-box .widefat {
+	margin-top: 4px;
+}
+
+.tailsignal-meta-box hr {
+	margin: 12px 0;
+	border-top: 1px solid #ddd;
+}
+
+.tailsignal-meta-box h4 {
+	margin-top: 0;
+}
+
+/* Admin notice overrides within #tailsignal-app */
+#tailsignal-app .notice {
+	margin-left: 0;
+	margin-right: 0;
+}
+
+/* WP List Table within #tailsignal-app */
+#tailsignal-app .wp-list-table {
+	border: none;
+}
+
+/* Fix Tailwind/WP conflicts */
+#tailsignal-app input[type="text"],
+#tailsignal-app input[type="url"],
+#tailsignal-app input[type="password"],
+#tailsignal-app input[type="datetime-local"],
+#tailsignal-app textarea,
+#tailsignal-app select {
+	border-color: #d1d5db;
+}
+
+#tailsignal-app input[type="text"]:focus,
+#tailsignal-app input[type="url"]:focus,
+#tailsignal-app input[type="password"]:focus,
+#tailsignal-app textarea:focus,
+#tailsignal-app select:focus {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
