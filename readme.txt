@@ -20,13 +20,14 @@ TailSignal lets you send push notifications to your mobile app users directly fr
 * **Expo Push API** — Works with any Expo/React Native app
 * **Auto-notify** — Automatically send notifications when posts are published
 * **Manual send** — Send custom notifications from the admin dashboard
-* **Scheduling** — Schedule notifications for later delivery
+* **Scheduling** — Schedule notifications for later delivery via WP-Cron
 * **Device groups** — Organize devices into groups for targeted sends
 * **Rich notifications** — Include featured images in push notifications
 * **Dev Mode** — Test notifications on your own devices without sending to everyone
 * **Export/Import** — CSV export and import for device management
 * **Template system** — Customizable notification templates with placeholders
-* **Post editor integration** — Meta box for per-post notification control
+* **Post editor integration** — Meta box for per-post notification control with quick send
+* **Clean uninstall** — All custom tables, options, and capabilities are removed on deletion
 
 **Template Placeholders:**
 
@@ -36,11 +37,22 @@ TailSignal lets you send push notifications to your mobile app users directly fr
 * `{author_name}` — Post author display name
 * `{category}` — Primary category name
 
+**REST API Endpoints:**
+
+* `POST /wp-json/tailsignal/v1/register` — Register a device (public)
+* `DELETE /wp-json/tailsignal/v1/register` — Unregister a device (public)
+* `POST /wp-json/tailsignal/v1/send` — Send or schedule a notification (admin)
+* `GET /wp-json/tailsignal/v1/stats` — Dashboard statistics (admin)
+* `GET /wp-json/tailsignal/v1/devices/export` — Export devices as CSV (admin)
+* `POST /wp-json/tailsignal/v1/devices/import` — Import devices from CSV (admin)
+
+For full API documentation, see the [GitHub README](https://github.com/mrdemonwolf/TailSignal).
+
 == Installation ==
 
-1. Upload the `tailsignal` folder to `/wp-content/plugins/`
+1. Upload the `tailsignal` folder to `/wp-content/plugins/` or install via the WordPress plugin uploader
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Go to TailSignal > Settings to configure
+3. Go to TailSignal > Settings to configure Dev Mode, templates, and Expo Access Token
 4. In your Expo/React Native app, register device tokens via the REST API
 
 == Frequently Asked Questions ==
@@ -55,11 +67,23 @@ You don't need a paid Expo account. The Expo Push Service is free. You can optio
 
 = What is Dev Mode? =
 
-Dev Mode lets you test notifications by only sending to devices flagged as "dev". This prevents accidentally sending test notifications to all your users.
+Dev Mode lets you test notifications by only sending to devices flagged as "dev". This prevents accidentally sending test notifications to all your users. Toggle it in TailSignal > Settings.
 
 = Can I send to specific groups of devices? =
 
-Yes! Create device groups (e.g., "Beta Testers", "VIP") and target notifications to specific groups.
+Yes! Create device groups (e.g., "Beta Testers", "VIP") under TailSignal > Groups and target notifications to specific groups when sending.
+
+= Does this support rich notifications with images? =
+
+Yes. When "Include Featured Image" is enabled in settings, the post's featured image is sent as a rich notification that displays on both iOS and Android.
+
+= What happens when I uninstall the plugin? =
+
+TailSignal performs a clean uninstall — all 6 custom database tables, all plugin options, custom capabilities, and post meta are removed. No data is left behind.
+
+= How do I register a device from my mobile app? =
+
+Send a POST request to `/wp-json/tailsignal/v1/register` with the Expo push token and device info. See the GitHub README for a full code example.
 
 == Screenshots ==
 
@@ -72,15 +96,17 @@ Yes! Create device groups (e.g., "Beta Testers", "VIP") and target notifications
 
 = 1.0.0 =
 * Initial release
-* Device registration via REST API
-* Auto-notify on post publish
-* Manual notification sending
-* Scheduled notifications
-* Device groups
+* Device registration and unregistration via REST API
+* Auto-notify on post publish with template placeholders
+* Manual notification sending with targeting (all, dev, group, specific)
+* Scheduled notifications via WP-Cron
+* Device groups for targeted sends
 * Rich notifications with featured images
-* Dev Mode for testing
-* CSV export/import
-* Notification history
+* Dev Mode for safe testing
+* CSV export and import for device management
+* Full notification history with delivery stats
+* Post editor meta box with quick send and per-post history
+* Clean uninstall removes all data
 
 == Upgrade Notice ==
 
