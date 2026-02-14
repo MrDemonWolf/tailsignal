@@ -23,6 +23,15 @@ jobs:
         run: composer install --no-dev --optimize-autoloader --prefer-dist --no-progress
 
       - name: Build ZIP
-        uses: 10up/action-wordpress-plugin-build-zip@stable
-        env:
-          SLUG: tailsignal
+        run: |
+          mkdir -p build
+          rsync -a --exclude-from='.distignore' . build/tailsignal/
+          cd build && zip -r tailsignal.zip tailsignal/ -x "*.DS_Store"
+          rm -rf build/tailsignal
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tailsignal
+          path: build/tailsignal.zip
+          retention-days: 5
