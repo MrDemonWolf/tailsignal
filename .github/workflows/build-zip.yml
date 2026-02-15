@@ -1,14 +1,16 @@
-name: Build Plugin ZIP
+name: Dev Build
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +31,25 @@ jobs:
           cd build && zip -r tailsignal.zip tailsignal/ -x "*.DS_Store"
           rm -rf build/tailsignal
 
+      - name: Get ZIP size
+        id: zip-info
+        run: echo "size=$(du -h build/tailsignal.zip | cut -f1)" >> $GITHUB_OUTPUT
+
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tailsignal
+          name: tailsignal-dev
           path: build/tailsignal.zip
-          retention-days: 5
+          retention-days: 14
+
+      - name: Comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: dev-build
+          message: |
+            **Dev Build Ready**
+
+            Download the plugin ZIP from the [Actions artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) page.
+
+            **Artifact:** `tailsignal-dev` (${{ steps.zip-info.outputs.size }})
+            **Commit:** ${{ github.event.pull_request.head.sha }}
