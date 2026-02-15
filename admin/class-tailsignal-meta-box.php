@@ -66,7 +66,7 @@ class TailSignal_Meta_Box {
 	public function save_meta_box( $post_id, $post ) {
 		// Verify nonce.
 		if ( ! isset( $_POST['tailsignal_meta_box_nonce'] ) ||
-		     ! wp_verify_nonce( $_POST['tailsignal_meta_box_nonce'], 'tailsignal_meta_box' ) ) {
+		     ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['tailsignal_meta_box_nonce'] ) ), 'tailsignal_meta_box' ) ) {
 			return;
 		}
 

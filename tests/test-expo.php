@@ -60,6 +60,33 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 	}
 
 	/**
+	 * Test build_message with image URL sets mutableContent for iOS.
+	 */
+	public function test_build_message_with_image_sets_mutable_content() {
+		$message = TailSignal_Expo::build_message( array(
+			'title'     => 'Test',
+			'body'      => 'Body',
+			'image_url' => 'https://example.com/image.jpg',
+		) );
+
+		$array = $message->toArray();
+		$this->assertTrue( $array['mutableContent'] );
+	}
+
+	/**
+	 * Test build_message without image does not enable mutableContent.
+	 */
+	public function test_build_message_without_image_no_mutable_content() {
+		$message = TailSignal_Expo::build_message( array(
+			'title' => 'Test',
+			'body'  => 'Body',
+		) );
+
+		$array = $message->toArray();
+		$this->assertFalse( $array['mutableContent'] );
+	}
+
+	/**
 	 * Test build_message with custom JSON data.
 	 */
 	public function test_build_message_with_custom_data() {

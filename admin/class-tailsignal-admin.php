@@ -143,6 +143,17 @@ class TailSignal_Admin {
 			),
 		) );
 
+		// Load Chart.js on dashboard page only.
+		if ( 'toplevel_page_tailsignal' === $hook ) {
+			wp_enqueue_script(
+				'chartjs',
+				'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
+				array(),
+				'4',
+				true
+			);
+		}
+
 		// Load Tailwind CSS via CDN on TailSignal admin pages only.
 		if ( $is_tailsignal ) {
 			wp_enqueue_script(

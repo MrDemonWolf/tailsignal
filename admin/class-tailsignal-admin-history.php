@@ -68,7 +68,7 @@ class TailSignal_History_List_Table extends WP_List_Table {
 		// Show body preview.
 		$body = esc_html( wp_trim_words( $item->body, 10, '...' ) );
 		$output = '<strong>' . $title . '</strong>';
-		$output .= '<br><span class="tw-text-xs tw-text-gray-500">' . $body . '</span>';
+		$output .= '<br><span class="tailsignal-text-muted">' . $body . '</span>';
 
 		return $output;
 	}
@@ -81,9 +81,9 @@ class TailSignal_History_List_Table extends WP_List_Table {
 	 */
 	public function column_type( $item ) {
 		$types = array(
-			'post'      => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-green-100 tw-text-green-800">post</span>',
-			'manual'    => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-blue-100 tw-text-blue-800">manual</span>',
-			'scheduled' => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-purple-100 tw-text-purple-800">scheduled</span>',
+			'post'      => '<span class="tailsignal-badge tailsignal-badge-green">post</span>',
+			'manual'    => '<span class="tailsignal-badge tailsignal-badge-blue">manual</span>',
+			'scheduled' => '<span class="tailsignal-badge tailsignal-badge-purple">scheduled</span>',
 		);
 
 		return $types[ $item->type ] ?? esc_html( $item->type );
@@ -124,12 +124,12 @@ class TailSignal_History_List_Table extends WP_List_Table {
 	 */
 	public function column_status( $item ) {
 		$statuses = array(
-			'pending'          => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-gray-100 tw-text-gray-800">pending</span>',
-			'scheduled'        => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-yellow-100 tw-text-yellow-800">scheduled</span>',
-			'sent'             => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-green-100 tw-text-green-800">sent</span>',
-			'receipts_checked' => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-green-100 tw-text-green-800">ok</span>',
-			'failed'           => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-red-100 tw-text-red-800">failed</span>',
-			'cancelled'        => '<span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-gray-100 tw-text-gray-500">cancelled</span>',
+			'pending'          => '<span class="tailsignal-badge tailsignal-badge-gray">pending</span>',
+			'scheduled'        => '<span class="tailsignal-badge tailsignal-badge-yellow">scheduled</span>',
+			'sent'             => '<span class="tailsignal-badge tailsignal-badge-green">sent</span>',
+			'receipts_checked' => '<span class="tailsignal-badge tailsignal-badge-green">ok</span>',
+			'failed'           => '<span class="tailsignal-badge tailsignal-badge-red">failed</span>',
+			'cancelled'        => '<span class="tailsignal-badge tailsignal-badge-gray-muted">cancelled</span>',
 		);
 
 		return $statuses[ $item->status ] ?? esc_html( $item->status );
@@ -146,7 +146,7 @@ class TailSignal_History_List_Table extends WP_List_Table {
 			return esc_html__( 'Scheduled:', 'tailsignal' ) . '<br>' . esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $item->scheduled_at ) ) );
 		}
 
-		return esc_html( human_time_diff( strtotime( $item->created_at ), current_time( 'timestamp' ) ) ) . ' ' . esc_html__( 'ago', 'tailsignal' );
+		return esc_html( human_time_diff( strtotime( $item->created_at ), time() ) ) . ' ' . esc_html__( 'ago', 'tailsignal' );
 	}
 
 	/**
@@ -187,6 +187,12 @@ class TailSignal_History_List_Table extends WP_List_Table {
 	 * Prepare items.
 	 */
 	public function prepare_items() {
+		$columns  = $this->get_columns();
+		$hidden   = array();
+		$sortable = $this->get_sortable_columns();
+
+		$this->_column_headers = array( $columns, $hidden, $sortable );
+
 		$per_page = 20;
 
 		$args = array(
@@ -217,5 +223,20 @@ class TailSignal_Admin_History {
 	 */
 	public function render() {
 		include TAILSIGNAL_PLUGIN_DIR . 'admin/partials/history.php';
+	}
+
+	/**
+	 * Handle AJAX delete all notifications.
+	 */
+	public function handle_delete_all() {
+		check_ajax_referer( 'tailsignal_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'tailsignal_manage' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'tailsignal' ) ) );
+		}
+
+		TailSignal_DB::delete_all_notifications();
+
+		wp_send_json_success( array( 'message' => __( 'All notification history deleted.', 'tailsignal' ) ) );
 	}
 }

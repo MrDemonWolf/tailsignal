@@ -85,6 +85,7 @@ class TailSignal_Expo {
 			$data['richContent'] = array(
 				'image' => $params['image_url'],
 			);
+			$attributes['mutableContent'] = true;
 		}
 
 		if ( ! empty( $data ) ) {
@@ -124,8 +125,10 @@ class TailSignal_Expo {
 		$expo    = self::get_instance();
 		$message = self::build_message( $params );
 
+		$indexed_tokens = array_values( $valid_tokens );
+
 		try {
-			$response = $expo->send( $message )->to( array_values( $valid_tokens ) )->push();
+			$response = $expo->send( $message )->to( $indexed_tokens )->push();
 
 			if ( $response ) {
 				$data = $response->getData();
@@ -142,9 +145,8 @@ class TailSignal_Expo {
 
 							// Track DeviceNotRegistered for cleanup.
 							if ( isset( $ticket['details']['error'] ) && 'DeviceNotRegistered' === $ticket['details']['error'] ) {
-								$token_index = array_values( $valid_tokens );
-								if ( isset( $token_index[ $index ] ) ) {
-									$result['stale_tokens'][] = $token_index[ $index ];
+								if ( isset( $indexed_tokens[ $index ] ) ) {
+									$result['stale_tokens'][] = $indexed_tokens[ $index ];
 								}
 							}
 						}
@@ -153,7 +155,9 @@ class TailSignal_Expo {
 			}
 		} catch ( \Exception $e ) {
 			$result['failed_count'] = count( $valid_tokens );
-			error_log( 'TailSignal Expo send error: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'TailSignal Expo send error: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
 		// Auto-remove stale tokens.
@@ -184,7 +188,9 @@ class TailSignal_Expo {
 				return $response->getData() ?? array();
 			}
 		} catch ( \Exception $e ) {
-			error_log( 'TailSignal receipt check error: ' . $e->getMessage() );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				error_log( 'TailSignal receipt check error: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
 		}
 
 		return array();

@@ -19,14 +19,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<!-- Groups Table -->
 	<?php if ( ! empty( $groups ) ) : ?>
-		<div class="tw-bg-white tw-rounded-lg tw-shadow tw-mb-8">
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-mb-8 tailsignal-section">
 			<table class="tw-w-full">
 				<thead>
-					<tr class="tw-border-b tw-border-gray-200">
-						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase"><?php esc_html_e( 'Name', 'tailsignal' ); ?></th>
-						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></th>
-						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase"><?php esc_html_e( 'Description', 'tailsignal' ); ?></th>
-						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-medium tw-text-gray-500 tw-uppercase"><?php esc_html_e( 'Actions', 'tailsignal' ); ?></th>
+					<tr class="tw-border-b tw-border-gray-100 tw-bg-gray-50">
+						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Name', 'tailsignal' ); ?></th>
+						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></th>
+						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Description', 'tailsignal' ); ?></th>
+						<th class="tw-px-6 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Actions', 'tailsignal' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -49,13 +49,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		</div>
 	<?php else : ?>
-		<div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-8 tw-text-center tw-text-gray-500 tw-mb-8">
-			<p><?php esc_html_e( 'No groups created yet. Create a group to organize your devices.', 'tailsignal' ); ?></p>
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-mb-8">
+			<div class="tailsignal-empty-state">
+				<div class="tailsignal-empty-state-icon">&#x1F465;</div>
+				<p><?php esc_html_e( 'No groups created yet. Create a group to organize your devices.', 'tailsignal' ); ?></p>
+			</div>
 		</div>
 	<?php endif; ?>
 
 	<!-- Create/Edit Group Form -->
-	<div id="tailsignal-group-form" class="tw-bg-white tw-rounded-lg tw-shadow tw-p-6" <?php echo ( ! $editing_group && ! isset( $_GET['new'] ) ) ? 'style="display:none;"' : ''; ?>>
+	<div id="tailsignal-group-form" class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-6 tailsignal-section" <?php echo ( ! $editing_group && ! isset( $_GET['new'] ) ) ? 'style="display:none;"' : ''; ?>>
 		<h2 class="tw-text-lg tw-font-semibold tw-mb-4 tw-m-0">
 			<?php echo $editing_group ? esc_html__( 'Edit Group', 'tailsignal' ) : esc_html__( 'Create Group', 'tailsignal' ); ?>
 		</h2>

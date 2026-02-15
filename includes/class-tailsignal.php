@@ -47,6 +47,7 @@ class TailSignal {
 	private function define_rest_hooks() {
 		$rest = new TailSignal_REST_Controller();
 		$this->loader->add_action( 'rest_api_init', $rest, 'register_routes' );
+		$this->loader->add_filter( 'rest_pre_serve_request', $rest, 'serve_csv_response', 10, 4 );
 	}
 
 	/**
@@ -95,6 +96,10 @@ class TailSignal {
 		$this->loader->add_action( 'wp_ajax_tailsignal_save_group', $groups, 'handle_save_group' );
 		$this->loader->add_action( 'wp_ajax_tailsignal_delete_group', $groups, 'handle_delete_group' );
 		$this->loader->add_action( 'wp_ajax_tailsignal_get_group_devices', $groups, 'handle_get_group_devices' );
+
+		// History AJAX.
+		$history = new TailSignal_Admin_History();
+		$this->loader->add_action( 'wp_ajax_tailsignal_delete_all_notifications', $history, 'handle_delete_all' );
 
 		// Devices AJAX.
 		$devices = new TailSignal_Admin_Devices();

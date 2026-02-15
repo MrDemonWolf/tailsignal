@@ -37,7 +37,7 @@ class TailSignal_Admin_Send {
 		$title        = sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) );
 		$body         = sanitize_textarea_field( wp_unslash( $_POST['body'] ?? '' ) );
 		$image_url    = esc_url_raw( wp_unslash( $_POST['image_url'] ?? '' ) );
-		$data         = isset( $_POST['data'] ) ? wp_unslash( $_POST['data'] ) : null;
+		$data         = isset( $_POST['data'] ) ? sanitize_text_field( wp_unslash( $_POST['data'] ) ) : null;
 		$target_type  = sanitize_text_field( wp_unslash( $_POST['target_type'] ?? 'all' ) );
 		$target_ids   = isset( $_POST['target_ids'] ) ? array_map( 'intval', (array) $_POST['target_ids'] ) : null;
 		$scheduled_at = sanitize_text_field( wp_unslash( $_POST['scheduled_at'] ?? '' ) );

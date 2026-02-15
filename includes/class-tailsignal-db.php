@@ -12,6 +12,78 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TailSignal_DB {
 
 	/**
+	 * Map of device column format specifiers.
+	 */
+	private static $device_formats = array(
+		'user_id'        => '%d',
+		'expo_token'     => '%s',
+		'device_type'    => '%s',
+		'device_model'   => '%s',
+		'os_version'     => '%s',
+		'app_version'    => '%s',
+		'locale'         => '%s',
+		'timezone'       => '%s',
+		'user_label'     => '%s',
+		'is_dev'         => '%d',
+		'is_active'      => '%d',
+		'last_active_at' => '%s',
+		'created_at'     => '%s',
+		'updated_at'     => '%s',
+	);
+
+	/**
+	 * Map of notification column format specifiers.
+	 */
+	private static $notification_formats = array(
+		'title'         => '%s',
+		'body'          => '%s',
+		'data'          => '%s',
+		'post_id'       => '%d',
+		'type'          => '%s',
+		'target_type'   => '%s',
+		'target_ids'    => '%s',
+		'image_url'     => '%s',
+		'scheduled_at'  => '%s',
+		'total_devices' => '%d',
+		'total_success' => '%d',
+		'total_failed'  => '%d',
+		'status'        => '%s',
+		'ticket_ids'    => '%s',
+		'receipt_data'  => '%s',
+		'sent_by'       => '%d',
+		'created_at'    => '%s',
+		'updated_at'    => '%s',
+	);
+
+	/**
+	 * Get format array for device data.
+	 *
+	 * @param array $data The data array.
+	 * @return array Format specifiers in same order as data keys.
+	 */
+	private static function get_device_format( $data ) {
+		$format = array();
+		foreach ( array_keys( $data ) as $key ) {
+			$format[] = self::$device_formats[ $key ] ?? '%s';
+		}
+		return $format;
+	}
+
+	/**
+	 * Get format array for notification data.
+	 *
+	 * @param array $data The data array.
+	 * @return array Format specifiers in same order as data keys.
+	 */
+	private static function get_notification_format( $data ) {
+		$format = array();
+		foreach ( array_keys( $data ) as $key ) {
+			$format[] = self::$notification_formats[ $key ] ?? '%s';
+		}
+		return $format;
+	}
+
+	/**
 	 * Create all custom tables.
 	 */
 	public static function create_tables() {
@@ -181,6 +253,8 @@ class TailSignal_DB {
 			)
 		);
 
+		$format = self::get_device_format( $data );
+
 		if ( $existing ) {
 			// Update existing device.
 			unset( $data['created_at'] );
@@ -188,18 +262,20 @@ class TailSignal_DB {
 			$data['last_active_at'] = $now;
 			$data['is_active']      = 1;
 
+			$format = self::get_device_format( $data );
+
 			$wpdb->update(
 				$table,
 				$data,
 				array( 'id' => $existing ),
-				null,
+				$format,
 				array( '%d' )
 			);
 
 			return (int) $existing;
 		}
 
-		$wpdb->insert( $table, $data );
+		$wpdb->insert( $table, $data, $format );
 
 		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
 	}
@@ -296,7 +372,9 @@ class TailSignal_DB {
 		return (bool) $wpdb->update(
 			$table,
 			$data,
-			array( 'id' => $device_id )
+			array( 'id' => $device_id ),
+			self::get_device_format( $data ),
+			array( '%d' )
 		);
 	}
 
@@ -824,7 +902,7 @@ class TailSignal_DB {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		$wpdb->insert( $table, $data );
+		$wpdb->insert( $table, $data, self::get_notification_format( $data ) );
 
 		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
 	}
@@ -842,7 +920,13 @@ class TailSignal_DB {
 		$table             = $wpdb->prefix . 'tailsignal_notifications';
 		$data['updated_at'] = current_time( 'mysql' );
 
-		return (bool) $wpdb->update( $table, $data, array( 'id' => $notification_id ) );
+		return (bool) $wpdb->update(
+			$table,
+			$data,
+			array( 'id' => $notification_id ),
+			self::get_notification_format( $data ),
+			array( '%d' )
+		);
 	}
 
 	/**
@@ -1082,6 +1166,49 @@ class TailSignal_DB {
 				WHERE nh.post_id = %d
 				ORDER BY nh.created_at DESC",
 				$post_id
+			)
+		);
+	}
+
+	/**
+	 * Delete all notifications and notification history.
+	 *
+	 * @return bool True on success.
+	 */
+	public static function delete_all_notifications() {
+		global $wpdb;
+
+		$prefix = $wpdb->prefix . 'tailsignal_';
+
+		$wpdb->query( "TRUNCATE TABLE {$prefix}notification_history" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "TRUNCATE TABLE {$prefix}notifications" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return true;
+	}
+
+	/**
+	 * Get monthly notification stats for the last N months.
+	 *
+	 * @param int $months Number of months to retrieve.
+	 * @return array Array of objects with month, total, success, failed.
+	 */
+	public static function get_monthly_notification_stats( $months = 12 ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'tailsignal_notifications';
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT DATE_FORMAT(created_at, '%%Y-%%m') as month,
+					COUNT(*) as total,
+					SUM(total_success) as success,
+					SUM(total_failed) as failed
+				FROM {$table}
+				WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d MONTH)
+					AND status IN ('sent', 'receipts_checked', 'failed')
+				GROUP BY DATE_FORMAT(created_at, '%%Y-%%m')
+				ORDER BY month ASC",
+				$months
 			)
 		);
 	}
