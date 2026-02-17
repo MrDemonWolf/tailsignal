@@ -164,6 +164,7 @@ class TailSignal_Admin {
 				'4.4.7',
 				true
 			);
+			wp_script_add_data( 'chartjs', 'strategy', 'defer' );
 		}
 	}
 

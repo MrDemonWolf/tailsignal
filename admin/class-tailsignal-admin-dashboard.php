@@ -32,8 +32,9 @@ class TailSignal_Admin_Dashboard {
 			'failed'  => array(),
 		);
 		$months_map = array();
+		$base = strtotime( gmdate( 'Y-m-01' ) );
 		for ( $i = 11; $i >= 0; $i-- ) {
-			$key                     = gmdate( 'Y-m', strtotime( "-{$i} months" ) );
+			$key                     = gmdate( 'Y-m', strtotime( "-{$i} months", $base ) );
 			$chart_data['labels'][]  = $key;
 			$chart_data['success'][] = 0;
 			$chart_data['failed'][]  = 0;

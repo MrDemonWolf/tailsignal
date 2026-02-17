@@ -1281,7 +1281,7 @@ class TailSignal_DB {
 					SUM(total_success) as success,
 					SUM(total_failed) as failed
 				FROM {$table}
-				WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d MONTH)
+				WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d MONTH)
 					AND status IN ('sent', 'receipts_checked', 'failed')
 				GROUP BY DATE_FORMAT(created_at, '%%Y-%%m')
 				ORDER BY month ASC",
@@ -1337,7 +1337,7 @@ class TailSignal_DB {
 				continue;
 			}
 
-			$existing = self::get_device_by_token( $row['expo_token'] );
+			$existing = self::get_device_by_token( $token );
 
 			$data = array(
 				'expo_token'   => $token,

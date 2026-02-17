@@ -232,6 +232,13 @@ class TailSignal_REST_Controller {
 							array( 'status' => 400 )
 						);
 					}
+					if ( $timestamp <= time() ) {
+						return new WP_Error(
+							'tailsignal_past_date',
+							__( 'Scheduled time must be in the future.', 'tailsignal' ),
+							array( 'status' => 400 )
+						);
+					}
 					return true;
 				},
 			),
@@ -451,7 +458,7 @@ class TailSignal_REST_Controller {
 		), ',', '"', '\\' );
 
 		foreach ( $devices as $device ) {
-			fputcsv( $output, array(
+			fputcsv( $output, array_map( array( $this, 'sanitize_csv_value' ), array(
 				$device->expo_token,
 				$device->device_type,
 				$device->device_model,
@@ -462,7 +469,7 @@ class TailSignal_REST_Controller {
 				$device->user_label,
 				$device->is_dev,
 				$device->created_at,
-			), ',', '"', '\\' );
+			) ), ',', '"', '\\' );
 		}
 
 		rewind( $output );
@@ -593,5 +600,18 @@ class TailSignal_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Sanitize a value for CSV export to prevent formula injection.
+	 *
+	 * @param mixed $value The cell value.
+	 * @return mixed Sanitized value.
+	 */
+	private function sanitize_csv_value( $value ) {
+		if ( is_string( $value ) && isset( $value[0] ) && in_array( $value[0], array( '=', '+', '-', '@' ), true ) ) {
+			$value = "'" . $value;
+		}
+		return $value;
 	}
 }
