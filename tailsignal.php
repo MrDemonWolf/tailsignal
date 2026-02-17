@@ -4,6 +4,7 @@
  *
  * @package     TailSignal
  * @author      MrDemonWolf, Inc.
+ * @copyright   Copyright (c) 2025-2026, MrDemonWolf, Inc.
  * @license     GPL-2.0-or-later
  *
  * @wordpress-plugin

@@ -81,18 +81,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</div>
 
-</div>
+
 
 <?php
 $table = new TailSignal_Devices_List_Table();
 $table->prepare_items();
 ?>
-<div class="wrap" style="padding-top: 0;">
-	<form method="get">
-		<input type="hidden" name="page" value="tailsignal-devices" />
-		<?php
-		$table->search_box( __( 'Search Devices', 'tailsignal' ), 'tailsignal-search' );
-		$table->display();
-		?>
-	</form>
+	<div class="wrap" style="padding-top: 0;">
+		<form method="post">
+			<input type="hidden" name="page" value="tailsignal-devices" />
+			<?php
+			$table->search_box( __( 'Search Devices', 'tailsignal' ), 'tailsignal-search' );
+			$table->display();
+			?>
+		</form>
+	</div>
 </div>

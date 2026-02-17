@@ -1257,10 +1257,10 @@ class TailSignal_DB {
 
 		$prefix = $wpdb->prefix . 'tailsignal_';
 
-		$wpdb->query( "TRUNCATE TABLE {$prefix}notification_history" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "TRUNCATE TABLE {$prefix}notifications" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$r1 = $wpdb->query( "TRUNCATE TABLE {$prefix}notification_history" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$r2 = $wpdb->query( "TRUNCATE TABLE {$prefix}notifications" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		return true;
+		return false !== $r1 && false !== $r2;
 	}
 
 	/**

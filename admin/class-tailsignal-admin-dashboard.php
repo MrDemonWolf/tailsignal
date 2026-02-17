@@ -25,16 +25,26 @@ class TailSignal_Admin_Dashboard {
 		$dev_mode        = '1' === get_option( 'tailsignal_dev_mode', '0' );
 		$chart_stats     = TailSignal_DB::get_monthly_notification_stats( 12 );
 
-		// Prepare chart data for JS.
+		// Prepare chart data for JS — pre-fill 12 months so gaps show as zero.
 		$chart_data = array(
 			'labels'  => array(),
 			'success' => array(),
 			'failed'  => array(),
 		);
+		$months_map = array();
+		for ( $i = 11; $i >= 0; $i-- ) {
+			$key                     = gmdate( 'Y-m', strtotime( "-{$i} months" ) );
+			$chart_data['labels'][]  = $key;
+			$chart_data['success'][] = 0;
+			$chart_data['failed'][]  = 0;
+			$months_map[ $key ]      = 11 - $i;
+		}
 		foreach ( $chart_stats as $row ) {
-			$chart_data['labels'][]  = $row->month;
-			$chart_data['success'][] = (int) $row->success;
-			$chart_data['failed'][]  = (int) $row->failed;
+			if ( isset( $months_map[ $row->month ] ) ) {
+				$idx                          = $months_map[ $row->month ];
+				$chart_data['success'][ $idx ] = (int) $row->success;
+				$chart_data['failed'][ $idx ]  = (int) $row->failed;
+			}
 		}
 
 		// Pass chart data to JS via localize.

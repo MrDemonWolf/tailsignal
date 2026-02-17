@@ -8,7 +8,7 @@
 /* ── Base Transitions ───────────────────────────────── */
 #tailsignal-app .button,
 #tailsignal-app a {
-	transition: all 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 /* ── Cards & Containers ─────────────────────────────── */
@@ -213,7 +213,7 @@
 	color: #64748b;
 	cursor: pointer;
 	line-height: 1.6;
-	transition: all 0.12s ease;
+	transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
 .tailsignal-placeholder-btn:hover {
@@ -346,7 +346,7 @@
 .tailsignal-btn-danger {
 	color: #b91c1c !important;
 	border-color: #fca5a5 !important;
-	transition: all 0.15s ease;
+	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .tailsignal-btn-danger:hover {

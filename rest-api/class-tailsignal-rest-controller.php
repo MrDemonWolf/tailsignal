@@ -176,7 +176,9 @@ class TailSignal_REST_Controller {
 			'data'        => array(
 				'type'              => 'string',
 				'default'           => null,
-				'sanitize_callback' => 'sanitize_text_field',
+				'sanitize_callback' => function( $value ) {
+					return is_string( $value ) ? wp_unslash( trim( $value ) ) : $value;
+				},
 				'validate_callback' => function( $value ) {
 					if ( null === $value || '' === $value ) {
 						return true;
@@ -534,12 +536,16 @@ class TailSignal_REST_Controller {
 		}
 
 		$allowed_mimes = array( 'text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel' );
-		if ( ! empty( $file_info['type'] ) && ! in_array( $file_info['type'], $allowed_mimes, true ) ) {
-			return new WP_Error(
-				'invalid_file',
-				__( 'Invalid file type.', 'tailsignal' ),
-				array( 'status' => 400 )
-			);
+		$finfo = finfo_open( FILEINFO_MIME_TYPE );
+		if ( $finfo ) {
+			$detected_mime = finfo_file( $finfo, $file_info['tmp_name'] );
+			if ( $detected_mime && ! in_array( $detected_mime, $allowed_mimes, true ) ) {
+				return new WP_Error(
+					'invalid_file',
+					__( 'Invalid file type.', 'tailsignal' ),
+					array( 'status' => 400 )
+				);
+			}
 		}
 
 		$file = fopen( $file_info['tmp_name'], 'r' );

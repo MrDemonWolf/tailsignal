@@ -302,7 +302,13 @@ class TailSignal_Admin_Devices {
 		}
 
 		// Handle bulk actions.
-		if ( isset( $_POST['action'] ) && 'delete' === $_POST['action'] && ! empty( $_POST['device_ids'] ) ) {
+		$bulk_action = '';
+		if ( ! empty( $_POST['action'] ) && '-1' !== $_POST['action'] ) {
+			$bulk_action = $_POST['action'];
+		} elseif ( ! empty( $_POST['action2'] ) && '-1' !== $_POST['action2'] ) {
+			$bulk_action = $_POST['action2'];
+		}
+		if ( 'delete' === $bulk_action && ! empty( $_POST['device_ids'] ) ) {
 			if ( ! current_user_can( 'tailsignal_manage' ) ) {
 				wp_die( esc_html__( 'You do not have permission to perform this action.', 'tailsignal' ) );
 			}

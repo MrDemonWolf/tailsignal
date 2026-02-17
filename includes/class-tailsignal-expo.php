@@ -155,9 +155,7 @@ class TailSignal_Expo {
 			}
 		} catch ( \Exception $e ) {
 			$result['failed_count'] = count( $valid_tokens );
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'TailSignal Expo send error: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			}
+			error_log( 'TailSignal Expo send error: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		// Auto-remove stale tokens.
@@ -188,9 +186,7 @@ class TailSignal_Expo {
 				return $response->getData() ?? array();
 			}
 		} catch ( \Exception $e ) {
-			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-				error_log( 'TailSignal receipt check error: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			}
+			error_log( 'TailSignal receipt check error: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		}
 
 		return array();

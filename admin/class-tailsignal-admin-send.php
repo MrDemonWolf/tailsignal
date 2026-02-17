@@ -37,7 +37,13 @@ class TailSignal_Admin_Send {
 		$title        = sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) );
 		$body         = sanitize_textarea_field( wp_unslash( $_POST['body'] ?? '' ) );
 		$image_url    = esc_url_raw( wp_unslash( $_POST['image_url'] ?? '' ) );
-		$data         = isset( $_POST['data'] ) ? sanitize_text_field( wp_unslash( $_POST['data'] ) ) : null;
+		$data = null;
+		if ( isset( $_POST['data'] ) && '' !== $_POST['data'] ) {
+			$data = wp_unslash( $_POST['data'] );
+			if ( null === json_decode( $data ) && JSON_ERROR_NONE !== json_last_error() ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid JSON in data field.', 'tailsignal' ) ) );
+			}
+		}
 		$target_type  = sanitize_text_field( wp_unslash( $_POST['target_type'] ?? 'all' ) );
 		$target_ids   = isset( $_POST['target_ids'] ) ? array_map( 'intval', (array) $_POST['target_ids'] ) : null;
 		$scheduled_at = sanitize_text_field( wp_unslash( $_POST['scheduled_at'] ?? '' ) );

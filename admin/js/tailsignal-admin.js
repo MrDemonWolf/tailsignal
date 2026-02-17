@@ -164,10 +164,10 @@
 
 	// Delete All History
 	$(document).on('click', '#tailsignal-delete-all-history', function() {
-		if (!confirm('Are you sure you want to delete ALL notification history? This cannot be undone.')) return;
+		if (!confirm(tailsignal.strings.confirm_delete_all)) return;
 
 		var $btn = $(this);
-		$btn.prop('disabled', true).text('Deleting...');
+		$btn.prop('disabled', true).text(tailsignal.strings.deleting);
 
 		$.post(tailsignal.ajax_url, {
 			action: 'tailsignal_delete_all_notifications',
@@ -177,11 +177,11 @@
 				location.reload();
 			} else {
 				alert(response.data.message);
-				$btn.prop('disabled', false).text('Delete All History');
+				$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
 			}
 		}).fail(function() {
 			alert(tailsignal.strings.error);
-			$btn.prop('disabled', false).text('Delete All History');
+			$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
 		});
 	});
 

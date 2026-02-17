@@ -133,8 +133,9 @@ class TailSignal_Admin {
 			TAILSIGNAL_PLUGIN_URL . 'admin/js/tailsignal-admin.js',
 			array( 'jquery' ),
 			TAILSIGNAL_VERSION,
-			array( 'in_footer' => true, 'strategy' => 'defer' )
+			true
 		);
+		wp_script_add_data( 'tailsignal-admin', 'strategy', 'defer' );
 
 		wp_localize_script( 'tailsignal-admin', 'tailsignal', array(
 			'ajax_url'  => admin_url( 'admin-ajax.php' ),
@@ -147,7 +148,10 @@ class TailSignal_Admin {
 				'sent'            => __( 'Sent!', 'tailsignal' ),
 				'error'           => __( 'An error occurred.', 'tailsignal' ),
 				'scheduled'       => __( 'Scheduled!', 'tailsignal' ),
-				'cancelled'       => __( 'Cancelled.', 'tailsignal' ),
+				'cancelled'          => __( 'Cancelled.', 'tailsignal' ),
+				'confirm_delete_all' => __( 'Are you sure you want to delete ALL notification history? This cannot be undone.', 'tailsignal' ),
+				'deleting'           => __( 'Deleting...', 'tailsignal' ),
+				'delete_all_history' => __( 'Delete All History', 'tailsignal' ),
 			),
 		) );
 

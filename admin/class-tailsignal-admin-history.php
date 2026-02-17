@@ -235,7 +235,11 @@ class TailSignal_Admin_History {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'tailsignal' ) ) );
 		}
 
-		TailSignal_DB::delete_all_notifications();
+		$result = TailSignal_DB::delete_all_notifications();
+
+		if ( ! $result ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete notification history.', 'tailsignal' ) ) );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'All notification history deleted.', 'tailsignal' ) ) );
 	}
