@@ -101,6 +101,185 @@
 		});
 	});
 
+	// Placeholder quick-fill buttons
+	$(document).on('click', '.tailsignal-placeholder-btn', function() {
+		var targetId = $(this).data('target');
+		var value = $(this).data('value');
+		var $field = $('#' + targetId);
+		var el = $field[0];
+
+		if (el && el.setSelectionRange) {
+			var start = el.selectionStart;
+			var end = el.selectionEnd;
+			var text = $field.val();
+			$field.val(text.substring(0, start) + value + text.substring(end));
+			el.selectionStart = el.selectionEnd = start + value.length;
+			$field.trigger('input');
+		} else {
+			$field.val($field.val() + value);
+			$field.trigger('input');
+		}
+		$field.focus();
+	});
+
+	// Character counters
+	function updateCharCount($field) {
+		var $counter = $('.tailsignal-char-count[data-target="' + $field.attr('id') + '"]');
+		if (!$counter.length) return;
+		var len = $field.val().length;
+		var limit = parseInt($counter.data('limit'), 10);
+		$counter.text(len + ' / ' + limit);
+		$counter.toggleClass('tailsignal-char-over', len > limit);
+	}
+
+	$(document).on('input', '#tailsignal-title, #tailsignal-body', function() {
+		updateCharCount($(this));
+	});
+
+	// Live preview update
+	$(document).on('input', '#tailsignal-title, #tailsignal-body, #tailsignal-image-url', function() {
+		var title = $('#tailsignal-title').val();
+		var body = $('#tailsignal-body').val();
+		var imageUrl = $('#tailsignal-image-url').val();
+
+		$('#tailsignal-preview-title').text(title || 'Notification Title');
+		$('#tailsignal-preview-body').text(body || 'Notification body text will appear here...');
+
+		var $img = $('#tailsignal-preview-image');
+		if (imageUrl && /^https?:\/\/.+/i.test(imageUrl)) {
+			$img.css('background-image', 'url("' + imageUrl.replace(/["()]/g, '') + '")').show();
+		} else {
+			$img.hide().css('background-image', '');
+		}
+	});
+
+	// Fill Test Data button
+	$(document).on('click', '#tailsignal-fill-test', function() {
+		$('#tailsignal-title').val('Test Notification from TailSignal').trigger('input');
+		$('#tailsignal-body').val('This is a test push notification. If you received this, TailSignal is working correctly!').trigger('input');
+		$('input[name="target_type"][value="dev"]').prop('checked', true).trigger('change');
+	});
+
+	// ── History Page ───────────────────────────────────────────
+
+	// Delete All History
+	$(document).on('click', '#tailsignal-delete-all-history', function() {
+		if (!confirm(tailsignal.strings.confirm_delete_all)) return;
+
+		var $btn = $(this);
+		$btn.prop('disabled', true).text(tailsignal.strings.deleting);
+
+		$.post(tailsignal.ajax_url, {
+			action: 'tailsignal_delete_all_notifications',
+			nonce: tailsignal.nonce
+		}, function(response) {
+			if (response.success) {
+				location.reload();
+			} else {
+				alert(response.data.message);
+				$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
+			}
+		}).fail(function() {
+			alert(tailsignal.strings.error);
+			$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
+		});
+	});
+
+	// ── Dashboard Chart ────────────────────────────────────────
+
+	if (typeof Chart !== 'undefined' && typeof tailsignal_chart !== 'undefined' && tailsignal_chart.labels.length) {
+		var ctx = document.getElementById('tailsignal-chart');
+		if (ctx) {
+			// Format month labels (2025-01 → Jan)
+			var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+			var formattedLabels = tailsignal_chart.labels.map(function(label) {
+				var parts = label.split('-');
+				return monthNames[parseInt(parts[1], 10) - 1] || label;
+			});
+
+			new Chart(ctx, {
+				type: 'bar',
+				data: {
+					labels: formattedLabels,
+					datasets: [
+						{
+							label: 'Successful',
+							data: tailsignal_chart.success,
+							backgroundColor: 'rgba(34, 197, 94, 0.8)',
+							hoverBackgroundColor: '#22c55e',
+							borderRadius: 4,
+							borderSkipped: false
+						},
+						{
+							label: 'Failed',
+							data: tailsignal_chart.failed,
+							backgroundColor: 'rgba(239, 68, 68, 0.8)',
+							hoverBackgroundColor: '#ef4444',
+							borderRadius: 4,
+							borderSkipped: false
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					interaction: {
+						intersect: false,
+						mode: 'index'
+					},
+					plugins: {
+						legend: {
+							position: 'bottom',
+							labels: {
+								boxWidth: 10,
+								boxHeight: 10,
+								padding: 20,
+								font: { size: 12, weight: '500' },
+								usePointStyle: true,
+								pointStyle: 'rectRounded'
+							}
+						},
+						tooltip: {
+							backgroundColor: '#1e293b',
+							titleFont: { size: 13, weight: '600' },
+							bodyFont: { size: 12 },
+							padding: 10,
+							cornerRadius: 6,
+							displayColors: true,
+							boxPadding: 4
+						}
+					},
+					scales: {
+						x: {
+							stacked: true,
+							grid: { display: false },
+							border: { display: false },
+							ticks: {
+								font: { size: 11, weight: '500' },
+								color: '#94a3b8'
+							}
+						},
+						y: {
+							stacked: true,
+							beginAtZero: true,
+							grid: {
+								color: 'rgba(0, 0, 0, 0.04)',
+								drawBorder: false
+							},
+							border: { display: false },
+							ticks: {
+								stepSize: 1,
+								font: { size: 11 },
+								color: '#94a3b8',
+								padding: 8
+							}
+						}
+					}
+				}
+			});
+		}
+	}
+
 	// ── Devices Page ────────────────────────────────────────────
 
 	// Edit device label

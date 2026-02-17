@@ -9,7 +9,7 @@ TailSignal is a self-hosted WordPress plugin that sends push notifications to mo
 - PHP 7.4+ / WordPress 6.0+
 - Expo Push API via `ctwillie/expo-server-sdk-php`
 - PHPUnit 9.x + Brain Monkey + Mockery for tests
-- Tailwind CSS (CDN with `tw-` prefix) for admin UI
+- Tailwind CSS (pre-compiled with `tw-` prefix) for admin UI
 
 ## File Structure
 
@@ -115,7 +115,7 @@ Used in notification title/body templates:
 ## Testing
 
 - Run tests: `make test` or `composer test`
-- 167 tests, 261 assertions across 10 test files
+- 169 tests, 263 assertions across 10 test files
 - Brain Monkey mocks all WordPress functions (`add_action`, `get_option`, etc.)
 - Mockery mocks `$wpdb` and Expo SDK
 - `tests/bootstrap.php` defines stub classes: `WP_Error`, `WP_REST_Server`, `WP_REST_Response`, `WP_REST_Request`
@@ -131,17 +131,19 @@ Used in notification title/body templates:
 
 ## Building
 
+- `make css` — compiles Tailwind CSS (`npm run build:css`)
 - `make zip` — produces `build/tailsignal.zip` (production, no dev deps)
 - `make test` — installs deps and runs PHPUnit
 - `make clean` — removes build directory
 - `.distignore` controls what's excluded from the ZIP
+- `npm run build:css` — compiles Tailwind utilities to `admin/css/tailsignal-tailwind.css`
 
 ## CI/CD (GitHub Actions)
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `test.yml` | Push/PR to main | Tests on PHP 7.4, 8.0, 8.1, 8.2, 8.3 + composer validate + composer audit |
-| `build-zip.yml` | Push/PR to main | Builds plugin ZIP as artifact |
+| `build-zip.yml` | PR to main only | Builds plugin ZIP as artifact (dev builds) |
 | `release.yml` | GitHub release published | Runs full test matrix, then builds and attaches ZIP to release |
 
 ## Key Patterns
@@ -152,6 +154,10 @@ Used in notification title/body templates:
 - Receipt checking via WP-Cron 15 minutes after each send
 - Expo SDK auto-chunks to 100 tokens per request (600/sec rate limit)
 - `DeviceNotRegistered` errors auto-deactivate stale tokens
-- Admin pages use Tailwind CSS with `tw-` prefix to avoid WP conflicts
+- Admin pages use pre-compiled Tailwind CSS with `tw-` prefix to avoid WP conflicts
 - All admin content wrapped in `#tailsignal-app` container
 - AJAX handlers use `wp_send_json_success` / `wp_send_json_error`
+- Local asset bundling: no CDN dependencies (Tailwind CSS compiled locally, Chart.js vendored)
+- Batch DB queries: `get_device_summary_stats()`, `get_devices_groups_bulk()` to avoid N+1
+- Additional DB methods: `get_monthly_notification_stats()`, `delete_all_notifications()`, `import_devices()`
+- History page has `handle_delete_all()` AJAX handler for bulk notification deletion

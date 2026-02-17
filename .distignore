@@ -13,3 +13,7 @@
 /composer.phar
 /.editorconfig
 /.DS_Store
+/tailwind.config.js
+/package.json
+/package-lock.json
+/admin/css/tailwind-input.css

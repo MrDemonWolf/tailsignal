@@ -145,6 +145,7 @@ class Test_TailSignal_Scheduling extends TailSignal_TestCase {
 		$wpdb->shouldReceive( 'get_row' )->andReturn( $notification );
 		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
 		$wpdb->shouldReceive( 'update' )->andReturn( 1 );
+		$wpdb->shouldReceive( 'query' )->andReturn( 0 );
 
 		Functions\expect( 'get_option' )
 			->with( 'tailsignal_dev_mode', '0' )

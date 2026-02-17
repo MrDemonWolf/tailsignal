@@ -16,6 +16,13 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 class TailSignal_Devices_List_Table extends WP_List_Table {
 
 	/**
+	 * Bulk-loaded device groups map (device_id => groups array).
+	 *
+	 * @var array
+	 */
+	private $groups_map = array();
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -80,16 +87,16 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 
 		$badges = '';
 		if ( $item->is_dev ) {
-			$badges .= ' <span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-yellow-100 tw-text-yellow-800">DEV</span>';
+			$badges .= ' <span class="tailsignal-badge tailsignal-badge-yellow">DEV</span>';
 		}
 		if ( ! $item->is_active ) {
-			$badges .= ' <span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-red-100 tw-text-red-800">' . esc_html__( 'Inactive', 'tailsignal' ) . '</span>';
+			$badges .= ' <span class="tailsignal-badge tailsignal-badge-red">' . esc_html__( 'Inactive', 'tailsignal' ) . '</span>';
 		}
 
-		// Groups.
-		$groups = TailSignal_DB::get_device_groups( $item->id );
+		// Groups (pre-loaded in bulk via prepare_items).
+		$groups = isset( $this->groups_map[ $item->id ] ) ? $this->groups_map[ $item->id ] : array();
 		foreach ( $groups as $group ) {
-			$badges .= ' <span class="tw-inline-flex tw-items-center tw-px-2 tw-py-0.5 tw-rounded tw-text-xs tw-font-medium tw-bg-blue-100 tw-text-blue-800">' . esc_html( $group->name ) . '</span>';
+			$badges .= ' <span class="tailsignal-badge tailsignal-badge-blue">' . esc_html( $group->name ) . '</span>';
 		}
 
 		// Row actions.
@@ -127,11 +134,11 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 	 * @return string
 	 */
 	public function column_expo_token( $item ) {
-		$token = esc_html( $item->expo_token );
+		$token = $item->expo_token;
 		if ( strlen( $token ) > 30 ) {
 			$token = substr( $token, 0, 25 ) . '...';
 		}
-		return '<code class="tw-text-xs">' . $token . '</code>';
+		return '<code class="tailsignal-code">' . esc_html( $token ) . '</code>';
 	}
 
 	/**
@@ -142,9 +149,12 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 	 */
 	public function column_device_type( $item ) {
 		if ( 'ios' === $item->device_type ) {
-			return '<span class="tw-text-sm">iOS</span>';
+			return '<span class="tailsignal-badge tailsignal-badge-gray">iOS</span>';
 		} elseif ( 'android' === $item->device_type ) {
-			return '<span class="tw-text-sm">Android</span>';
+			return '<span class="tailsignal-badge tailsignal-badge-green">Android</span>';
+		}
+		if ( empty( $item->device_type ) ) {
+			return '<em>' . esc_html__( '(unknown)', 'tailsignal' ) . '</em>';
 		}
 		return esc_html( $item->device_type );
 	}
@@ -162,12 +172,15 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 			case 'os_version':
 			case 'app_version':
 			case 'locale':
+				if ( empty( $item->$column_name ) ) {
+					return '<em>' . esc_html__( '(unknown)', 'tailsignal' ) . '</em>';
+				}
 				return esc_html( $item->$column_name );
 			case 'last_active_at':
 				if ( empty( $item->last_active_at ) ) {
 					return '<em>' . esc_html__( 'Never', 'tailsignal' ) . '</em>';
 				}
-				return esc_html( human_time_diff( strtotime( $item->last_active_at ), current_time( 'timestamp' ) ) ) . ' ' . esc_html__( 'ago', 'tailsignal' );
+				return esc_html( human_time_diff( strtotime( $item->last_active_at ), time() ) ) . ' ' . esc_html__( 'ago', 'tailsignal' );
 			default:
 				return '';
 		}
@@ -233,6 +246,12 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 	 * Prepare items for display.
 	 */
 	public function prepare_items() {
+		$columns  = $this->get_columns();
+		$hidden   = array();
+		$sortable = $this->get_sortable_columns();
+
+		$this->_column_headers = array( $columns, $hidden, $sortable );
+
 		$per_page = 20;
 
 		$args = array(
@@ -250,6 +269,12 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 
 		$this->items = $result['items'];
 
+		// Bulk-load groups for all devices on this page (1 query vs N).
+		if ( ! empty( $this->items ) ) {
+			$device_ids       = wp_list_pluck( $this->items, 'id' );
+			$this->groups_map = TailSignal_DB::get_devices_groups_bulk( $device_ids );
+		}
+
 		$this->set_pagination_args( array(
 			'total_items' => $result['total'],
 			'per_page'    => $per_page,
@@ -266,6 +291,9 @@ class TailSignal_Admin_Devices {
 	public function render() {
 		// Handle single delete action.
 		if ( isset( $_GET['action'] ) && 'delete' === $_GET['action'] && isset( $_GET['device_id'] ) ) {
+			if ( ! current_user_can( 'tailsignal_manage' ) ) {
+				wp_die( esc_html__( 'You do not have permission to perform this action.', 'tailsignal' ) );
+			}
 			$device_id = intval( $_GET['device_id'] );
 			check_admin_referer( 'tailsignal_delete_device_' . $device_id );
 			TailSignal_DB::delete_device( $device_id );
@@ -274,13 +302,28 @@ class TailSignal_Admin_Devices {
 		}
 
 		// Handle bulk actions.
-		if ( isset( $_POST['action'] ) && 'delete' === $_POST['action'] && ! empty( $_POST['device_ids'] ) ) {
+		$bulk_action = '';
+		if ( ! empty( $_POST['action'] ) && '-1' !== $_POST['action'] ) {
+			$bulk_action = $_POST['action'];
+		} elseif ( ! empty( $_POST['action2'] ) && '-1' !== $_POST['action2'] ) {
+			$bulk_action = $_POST['action2'];
+		}
+		if ( 'delete' === $bulk_action && ! empty( $_POST['device_ids'] ) ) {
+			if ( ! current_user_can( 'tailsignal_manage' ) ) {
+				wp_die( esc_html__( 'You do not have permission to perform this action.', 'tailsignal' ) );
+			}
 			check_admin_referer( 'bulk-devices' );
 			$device_ids = array_map( 'intval', $_POST['device_ids'] );
 			TailSignal_DB::bulk_delete_devices( $device_ids );
 			wp_safe_redirect( admin_url( 'admin.php?page=tailsignal-devices&deleted=' . count( $device_ids ) ) );
 			exit;
 		}
+
+		// Summary stats — single query instead of 3 separate COUNTs.
+		$device_stats    = TailSignal_DB::get_device_summary_stats();
+		$device_count    = $device_stats['total'];
+		$platform_counts = array( 'ios' => $device_stats['ios'], 'android' => $device_stats['android'] );
+		$dev_count       = $device_stats['dev'];
 
 		include TAILSIGNAL_PLUGIN_DIR . 'admin/partials/devices.php';
 	}

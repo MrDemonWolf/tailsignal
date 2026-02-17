@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<div class="tw-flex tw-items-center tw-justify-between tw-mb-6">
 		<h1 class="tw-text-2xl tw-font-bold"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></h1>
 		<div class="tw-flex tw-gap-2">
-			<a href="<?php echo esc_url( rest_url( 'tailsignal/v1/devices/export' ) ); ?>&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" class="button">
+			<a href="<?php echo esc_url( wp_nonce_url( rest_url( 'tailsignal/v1/devices/export' ), 'wp_rest', '_wpnonce' ) ); ?>" class="button">
 				<?php esc_html_e( 'Export CSV', 'tailsignal' ); ?>
 			</a>
 			<button type="button" class="button" id="tailsignal-import-btn">
@@ -22,8 +22,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</div>
 
+	<!-- Summary Stats -->
+	<div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-4 tw-mb-6">
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-4 tailsignal-stat-card tailsignal-stat-card--blue">
+			<div class="tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wide tw-mb-1"><?php esc_html_e( 'Total Active', 'tailsignal' ); ?></div>
+			<div class="tw-text-2xl tw-font-bold tw-text-gray-900"><?php echo esc_html( $device_count ); ?></div>
+		</div>
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-4 tailsignal-stat-card tailsignal-stat-card--gray">
+			<div class="tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wide tw-mb-1"><?php esc_html_e( 'iOS', 'tailsignal' ); ?></div>
+			<div class="tw-text-2xl tw-font-bold tw-text-gray-900"><?php echo esc_html( $platform_counts['ios'] ); ?></div>
+		</div>
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-4 tailsignal-stat-card tailsignal-stat-card--green">
+			<div class="tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wide tw-mb-1"><?php esc_html_e( 'Android', 'tailsignal' ); ?></div>
+			<div class="tw-text-2xl tw-font-bold tw-text-gray-900"><?php echo esc_html( $platform_counts['android'] ); ?></div>
+		</div>
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-4 tailsignal-stat-card tailsignal-stat-card--yellow">
+			<div class="tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wide tw-mb-1"><?php esc_html_e( 'Dev', 'tailsignal' ); ?></div>
+			<div class="tw-text-2xl tw-font-bold tw-text-gray-900"><?php echo esc_html( $dev_count ); ?></div>
+		</div>
+	</div>
+
 	<!-- Import Form (hidden) -->
-	<div id="tailsignal-import-form" class="tw-bg-white tw-rounded-lg tw-shadow tw-p-6 tw-mb-6" style="display:none;">
+	<div id="tailsignal-import-form" class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-6 tw-mb-6 tailsignal-section" style="display:none;">
 		<form method="post" enctype="multipart/form-data" id="tailsignal-import-upload">
 			<div class="tw-flex tw-items-center tw-gap-4">
 				<input type="file" name="file" accept=".csv" required class="tw-text-sm" />
@@ -61,16 +81,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</div>
 
-	<?php
-	$table = new TailSignal_Devices_List_Table();
-	$table->prepare_items();
-	?>
 
-	<form method="get">
-		<input type="hidden" name="page" value="tailsignal-devices" />
-		<?php
-		$table->search_box( __( 'Search Devices', 'tailsignal' ), 'tailsignal-search' );
-		$table->display();
-		?>
-	</form>
+
+<?php
+$table = new TailSignal_Devices_List_Table();
+$table->prepare_items();
+?>
+	<div class="wrap" style="padding-top: 0;">
+		<form method="post">
+			<input type="hidden" name="page" value="tailsignal-devices" />
+			<?php
+			$table->search_box( __( 'Search Devices', 'tailsignal' ), 'tailsignal-search' );
+			$table->display();
+			?>
+		</form>
+	</div>
 </div>

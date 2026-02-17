@@ -22,10 +22,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<!-- Data Management -->
 	<div class="tw-mt-8">
-		<h2 class="tw-text-lg tw-font-semibold tw-mb-4"><?php esc_html_e( 'Data Management', 'tailsignal' ); ?></h2>
-		<div class="tw-bg-white tw-rounded-lg tw-shadow tw-p-6">
+		<h2 class="tw-text-sm tw-font-semibold tw-uppercase tw-tracking-wide tw-text-gray-500 tw-mb-4"><?php esc_html_e( 'Data Management', 'tailsignal' ); ?></h2>
+		<div class="tw-bg-white tw-rounded-lg tw-shadow-sm tw-p-6 tailsignal-section">
 			<div class="tw-flex tw-gap-3">
-				<a href="<?php echo esc_url( rest_url( 'tailsignal/v1/devices/export' ) ); ?>&_wpnonce=<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" class="button">
+				<a href="<?php echo esc_url( wp_nonce_url( rest_url( 'tailsignal/v1/devices/export' ), 'wp_rest', '_wpnonce' ) ); ?>" class="button">
 					<?php esc_html_e( 'Export All Devices (CSV)', 'tailsignal' ); ?>
 				</a>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=tailsignal-devices' ) ); ?>" class="button">

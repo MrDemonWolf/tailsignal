@@ -12,6 +12,78 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TailSignal_DB {
 
 	/**
+	 * Map of device column format specifiers.
+	 */
+	private static $device_formats = array(
+		'user_id'        => '%d',
+		'expo_token'     => '%s',
+		'device_type'    => '%s',
+		'device_model'   => '%s',
+		'os_version'     => '%s',
+		'app_version'    => '%s',
+		'locale'         => '%s',
+		'timezone'       => '%s',
+		'user_label'     => '%s',
+		'is_dev'         => '%d',
+		'is_active'      => '%d',
+		'last_active_at' => '%s',
+		'created_at'     => '%s',
+		'updated_at'     => '%s',
+	);
+
+	/**
+	 * Map of notification column format specifiers.
+	 */
+	private static $notification_formats = array(
+		'title'         => '%s',
+		'body'          => '%s',
+		'data'          => '%s',
+		'post_id'       => '%d',
+		'type'          => '%s',
+		'target_type'   => '%s',
+		'target_ids'    => '%s',
+		'image_url'     => '%s',
+		'scheduled_at'  => '%s',
+		'total_devices' => '%d',
+		'total_success' => '%d',
+		'total_failed'  => '%d',
+		'status'        => '%s',
+		'ticket_ids'    => '%s',
+		'receipt_data'  => '%s',
+		'sent_by'       => '%d',
+		'created_at'    => '%s',
+		'updated_at'    => '%s',
+	);
+
+	/**
+	 * Get format array for device data.
+	 *
+	 * @param array $data The data array.
+	 * @return array Format specifiers in same order as data keys.
+	 */
+	private static function get_device_format( $data ) {
+		$format = array();
+		foreach ( array_keys( $data ) as $key ) {
+			$format[] = self::$device_formats[ $key ] ?? '%s';
+		}
+		return $format;
+	}
+
+	/**
+	 * Get format array for notification data.
+	 *
+	 * @param array $data The data array.
+	 * @return array Format specifiers in same order as data keys.
+	 */
+	private static function get_notification_format( $data ) {
+		$format = array();
+		foreach ( array_keys( $data ) as $key ) {
+			$format[] = self::$notification_formats[ $key ] ?? '%s';
+		}
+		return $format;
+	}
+
+	/**
 	 * Create all custom tables.
 	 */
 	public static function create_tables() {
@@ -181,6 +253,8 @@ class TailSignal_DB {
 			)
 		);
 
+		$format = self::get_device_format( $data );
+
 		if ( $existing ) {
 			// Update existing device.
 			unset( $data['created_at'] );
@@ -188,18 +262,20 @@ class TailSignal_DB {
 			$data['last_active_at'] = $now;
 			$data['is_active']      = 1;
 
+			$format = self::get_device_format( $data );
+
 			$wpdb->update(
 				$table,
 				$data,
 				array( 'id' => $existing ),
-				null,
+				$format,
 				array( '%d' )
 			);
 
 			return (int) $existing;
 		}
 
-		$wpdb->insert( $table, $data );
+		$wpdb->insert( $table, $data, $format );
 
 		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
 	}
@@ -296,7 +372,9 @@ class TailSignal_DB {
 		return (bool) $wpdb->update(
 			$table,
 			$data,
-			array( 'id' => $device_id )
+			array( 'id' => $device_id ),
+			self::get_device_format( $data ),
+			array( '%d' )
 		);
 	}
 
@@ -512,19 +590,58 @@ class TailSignal_DB {
 	}
 
 	/**
+	 * Get all device summary stats in a single query.
+	 *
+	 * Returns total active, iOS count, Android count, and dev count
+	 * from one DB round-trip instead of three separate COUNT queries.
+	 *
+	 * @return array Associative array with total, ios, android, dev keys.
+	 */
+	public static function get_device_summary_stats() {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'tailsignal_devices';
+
+		$row = $wpdb->get_row(
+			"SELECT
+				COUNT(*) as total,
+				SUM(CASE WHEN device_type = 'ios' THEN 1 ELSE 0 END) as ios,
+				SUM(CASE WHEN device_type = 'android' THEN 1 ELSE 0 END) as android,
+				SUM(CASE WHEN is_dev = 1 THEN 1 ELSE 0 END) as dev
+			FROM {$table}
+			WHERE is_active = 1"
+		);
+
+		return array(
+			'total'   => $row ? (int) $row->total : 0,
+			'ios'     => $row ? (int) $row->ios : 0,
+			'android' => $row ? (int) $row->android : 0,
+			'dev'     => $row ? (int) $row->dev : 0,
+		);
+	}
+
+	/**
 	 * Bulk delete devices.
 	 *
 	 * @param array $device_ids Array of device IDs.
 	 * @return int Number of devices deleted.
 	 */
 	public static function bulk_delete_devices( $device_ids ) {
-		$count = 0;
-		foreach ( $device_ids as $id ) {
-			if ( self::delete_device( (int) $id ) ) {
-				$count++;
-			}
+		global $wpdb;
+
+		if ( empty( $device_ids ) ) {
+			return 0;
 		}
-		return $count;
+
+		$device_ids   = array_map( 'intval', $device_ids );
+		$prefix       = $wpdb->prefix . 'tailsignal_';
+		$placeholders = implode( ',', array_fill( 0, count( $device_ids ), '%d' ) );
+
+		// Batch delete related data in 3 queries instead of 3 per device.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}device_meta WHERE device_id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}device_groups WHERE device_id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}devices WHERE id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -536,26 +653,21 @@ class TailSignal_DB {
 	public static function deactivate_tokens( $tokens ) {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'tailsignal_devices';
-		$count = 0;
-
-		foreach ( $tokens as $token ) {
-			$result = $wpdb->update(
-				$table,
-				array(
-					'is_active'  => 0,
-					'updated_at' => current_time( 'mysql' ),
-				),
-				array( 'expo_token' => $token ),
-				array( '%d', '%s' ),
-				array( '%s' )
-			);
-			if ( $result ) {
-				$count++;
-			}
+		if ( empty( $tokens ) ) {
+			return 0;
 		}
 
-		return $count;
+		$table        = $wpdb->prefix . 'tailsignal_devices';
+		$now          = current_time( 'mysql' );
+		$placeholders = implode( ',', array_fill( 0, count( $tokens ), '%s' ) );
+
+		// Single UPDATE with WHERE IN instead of one query per token.
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET is_active = 0, updated_at = %s WHERE expo_token IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				array_merge( array( $now ), $tokens )
+			)
+		);
 	}
 
 	// ── Groups ──────────────────────────────────────────────────
@@ -787,6 +899,49 @@ class TailSignal_DB {
 		);
 	}
 
+	/**
+	 * Get groups for multiple devices in a single query.
+	 *
+	 * Returns an associative array keyed by device_id, each containing
+	 * an array of group objects. Eliminates N+1 queries on list pages.
+	 *
+	 * @param array $device_ids Array of device IDs.
+	 * @return array Associative array of device_id => array of group objects.
+	 */
+	public static function get_devices_groups_bulk( $device_ids ) {
+		global $wpdb;
+
+		if ( empty( $device_ids ) ) {
+			return array();
+		}
+
+		$device_ids          = array_map( 'intval', $device_ids );
+		$groups_table        = $wpdb->prefix . 'tailsignal_groups';
+		$device_groups_table = $wpdb->prefix . 'tailsignal_device_groups';
+		$placeholders        = implode( ',', array_fill( 0, count( $device_ids ), '%d' ) );
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT dg.device_id, g.id, g.name, g.description FROM {$groups_table} g
+				INNER JOIN {$device_groups_table} dg ON g.id = dg.group_id
+				WHERE dg.device_id IN ({$placeholders})
+				ORDER BY g.name ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$device_ids
+			)
+		);
+
+		$map = array();
+		foreach ( $results as $row ) {
+			$did = (int) $row->device_id;
+			if ( ! isset( $map[ $did ] ) ) {
+				$map[ $did ] = array();
+			}
+			$map[ $did ][] = $row;
+		}
+
+		return $map;
+	}
+
 	// ── Notifications ───────────────────────────────────────────
 
 	/**
@@ -824,7 +979,7 @@ class TailSignal_DB {
 
 		$data = wp_parse_args( $data, $defaults );
 
-		$wpdb->insert( $table, $data );
+		$wpdb->insert( $table, $data, self::get_notification_format( $data ) );
 
 		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
 	}
@@ -842,7 +997,13 @@ class TailSignal_DB {
 		$table             = $wpdb->prefix . 'tailsignal_notifications';
 		$data['updated_at'] = current_time( 'mysql' );
 
-		return (bool) $wpdb->update( $table, $data, array( 'id' => $notification_id ) );
+		return (bool) $wpdb->update(
+			$table,
+			$data,
+			array( 'id' => $notification_id ),
+			self::get_notification_format( $data ),
+			array( '%d' )
+		);
 	}
 
 	/**
@@ -1086,6 +1247,49 @@ class TailSignal_DB {
 		);
 	}
 
+	/**
+	 * Delete all notifications and notification history.
+	 *
+	 * @return bool True on success.
+	 */
+	public static function delete_all_notifications() {
+		global $wpdb;
+
+		$prefix = $wpdb->prefix . 'tailsignal_';
+
+		$r1 = $wpdb->query( "TRUNCATE TABLE {$prefix}notification_history" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$r2 = $wpdb->query( "TRUNCATE TABLE {$prefix}notifications" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return false !== $r1 && false !== $r2;
+	}
+
+	/**
+	 * Get monthly notification stats for the last N months.
+	 *
+	 * @param int $months Number of months to retrieve.
+	 * @return array Array of objects with month, total, success, failed.
+	 */
+	public static function get_monthly_notification_stats( $months = 12 ) {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'tailsignal_notifications';
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT DATE_FORMAT(created_at, '%%Y-%%m') as month,
+					COUNT(*) as total,
+					SUM(total_success) as success,
+					SUM(total_failed) as failed
+				FROM {$table}
+				WHERE created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL %d MONTH)
+					AND status IN ('sent', 'receipts_checked', 'failed')
+				GROUP BY DATE_FORMAT(created_at, '%%Y-%%m')
+				ORDER BY month ASC",
+				$months
+			)
+		);
+	}
+
 	// ── Export/Import ────────────────────────────────────────────
 
 	/**
@@ -1126,10 +1330,17 @@ class TailSignal_DB {
 				continue;
 			}
 
-			$existing = self::get_device_by_token( $row['expo_token'] );
+			$token = sanitize_text_field( $row['expo_token'] );
+
+			if ( ! \ExpoSDK\Utils::isExpoPushToken( $token ) ) {
+				$results['skipped']++;
+				continue;
+			}
+
+			$existing = self::get_device_by_token( $token );
 
 			$data = array(
-				'expo_token'   => sanitize_text_field( $row['expo_token'] ),
+				'expo_token'   => $token,
 				'device_type'  => sanitize_text_field( $row['device_type'] ?? '' ),
 				'device_model' => sanitize_text_field( $row['device_model'] ?? '' ),
 				'os_version'   => sanitize_text_field( $row['os_version'] ?? '' ),

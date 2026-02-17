@@ -13,15 +13,18 @@ A self-hosted WordPress plugin using Expo to send custom push notifications. Own
 - **Self-hosted** - Your data stays on your server, no third-party services
 - **Expo Push API** - Works with any Expo/React Native mobile app
 - **Auto-notify on publish** - Automatically send a push when a new post is published
-- **Manual send** - Send custom notifications from the admin dashboard
+- **Manual send** - Send custom notifications with live preview, character counters, and placeholder quick-fill
 - **Scheduling** - Schedule notifications for future delivery via WP-Cron
 - **Device groups** - Organize devices into groups (e.g., "Beta Testers", "VIP") for targeted sends
 - **Rich notifications** - Include featured images for rich push notifications on iOS and Android
+- **Dashboard analytics** - Device stat cards, platform badges, monthly notification charts, and success rate tracking
 - **Dev Mode** - Test notifications on your own devices without sending to everyone
-- **Export/Import** - CSV export and import for device management
-- **Template system** - Customizable title/body templates with placeholders
+- **Export/Import** - CSV export and import for device management with token validation
+- **Template system** - Customizable title/body templates with `{post_title}`, `{site_name}`, `{author_name}`, `{category}`, and `{post_excerpt}` placeholders
 - **Post editor meta box** - Per-post notification control with quick send and history
+- **Notification history** - Full log with status tracking, delivery counts, and bulk delete
 - **Clean uninstall** - Removes all tables, options, and capabilities on deletion
+- **No CDN dependencies** - All assets (Tailwind CSS, Chart.js) bundled locally for security and performance
 
 ## Requirements
 
@@ -171,12 +174,12 @@ Import devices from a CSV file upload. Handles duplicates via upsert.
 
 | Page | Description |
 |------|-------------|
-| **Dashboard** | Overview with device stats, success rate, and recent notifications |
-| **Send** | Compose and send/schedule notifications with targeting options |
-| **Devices** | Manage registered devices, toggle dev flag, edit labels, bulk actions |
-| **Groups** | Create and manage device groups, assign devices |
-| **History** | Full notification log with status, delivery counts, and filtering |
-| **Settings** | Plugin configuration (Dev Mode, templates, Expo token) |
+| **Dashboard** | Device stat cards with platform badges, monthly notification chart (Chart.js), success rate, and recent activity |
+| **Send** | Compose notifications with live preview, character counters, placeholder quick-fill buttons, targeting (all/dev/group/specific), and scheduling |
+| **Devices** | Device list with search/filter, edit labels, toggle dev flag, bulk delete, CSV import/export |
+| **Groups** | Create and manage device groups, assign/remove devices with search |
+| **History** | Notification log with status, delivery counts, filtering, and delete all |
+| **Settings** | Plugin configuration (Dev Mode, templates, Expo token, auto-notify, featured images) |
 
 ## Dev Mode
 
@@ -193,6 +196,7 @@ Dev Mode lets you test notifications without sending to all users:
 
 - PHP 7.4+
 - [Composer](https://getcomposer.org/)
+- [Node.js](https://nodejs.org/) (for Tailwind CSS compilation)
 
 ### Setup
 
@@ -200,6 +204,8 @@ Dev Mode lets you test notifications without sending to all users:
 git clone https://github.com/mrdemonwolf/TailSignal.git
 cd TailSignal
 composer install
+npm install
+npm run build:css
 ```
 
 ### Running Tests
@@ -210,7 +216,7 @@ make test
 composer test
 ```
 
-The test suite includes 167 tests and 261 assertions covering:
+The test suite includes 169 tests and 263 assertions covering:
 
 - Database CRUD operations
 - Expo SDK integration
@@ -235,7 +241,7 @@ GitHub Actions workflows run automatically:
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | **Tests** | Push/PR to main | Runs tests on PHP 7.4, 8.0, 8.1, 8.2, 8.3 with composer validation and security audit |
-| **Build ZIP** | Push/PR to main | Builds plugin ZIP as a downloadable artifact |
+| **Build ZIP** | PR to main | Builds plugin ZIP as a downloadable artifact (dev builds) |
 | **Release** | GitHub release published | Runs full test matrix, then builds and attaches `tailsignal.zip` to the release |
 
 ## Database
@@ -281,6 +287,17 @@ async function registerForPushNotifications(wordpressSiteUrl) {
   });
 }
 ```
+
+## Security
+
+- All user inputs are sanitized via WordPress sanitization functions
+- Nonce verification on all AJAX handlers
+- Capability checks (`tailsignal_manage`) on all admin endpoints
+- Prepared statements for all database queries
+- `ABSPATH` guards on all PHP files
+- No external CDN dependencies -- all assets (Tailwind CSS, Chart.js) are bundled locally
+- Expo token format validation on registration and CSV import
+- MIME type validation on file uploads
 
 ## License
 

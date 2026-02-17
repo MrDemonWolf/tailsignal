@@ -98,9 +98,17 @@ class TailSignal_Admin {
 		}
 
 		wp_enqueue_style(
+			'tailsignal-tailwind',
+			TAILSIGNAL_PLUGIN_URL . 'admin/css/tailsignal-tailwind.css',
+			array(),
+			TAILSIGNAL_VERSION,
+			'all'
+		);
+
+		wp_enqueue_style(
 			'tailsignal-admin',
 			TAILSIGNAL_PLUGIN_URL . 'admin/css/tailsignal-admin.css',
-			array(),
+			array( 'tailsignal-tailwind' ),
 			TAILSIGNAL_VERSION,
 			'all'
 		);
@@ -127,6 +135,7 @@ class TailSignal_Admin {
 			TAILSIGNAL_VERSION,
 			true
 		);
+		wp_script_add_data( 'tailsignal-admin', 'strategy', 'defer' );
 
 		wp_localize_script( 'tailsignal-admin', 'tailsignal', array(
 			'ajax_url'  => admin_url( 'admin-ajax.php' ),
@@ -139,30 +148,23 @@ class TailSignal_Admin {
 				'sent'            => __( 'Sent!', 'tailsignal' ),
 				'error'           => __( 'An error occurred.', 'tailsignal' ),
 				'scheduled'       => __( 'Scheduled!', 'tailsignal' ),
-				'cancelled'       => __( 'Cancelled.', 'tailsignal' ),
+				'cancelled'          => __( 'Cancelled.', 'tailsignal' ),
+				'confirm_delete_all' => __( 'Are you sure you want to delete ALL notification history? This cannot be undone.', 'tailsignal' ),
+				'deleting'           => __( 'Deleting...', 'tailsignal' ),
+				'delete_all_history' => __( 'Delete All History', 'tailsignal' ),
 			),
 		) );
 
-		// Load Tailwind CSS via CDN on TailSignal admin pages only.
-		if ( $is_tailsignal ) {
+		// Load Chart.js on dashboard page only.
+		if ( 'toplevel_page_tailsignal' === $hook ) {
 			wp_enqueue_script(
-				'tailwindcss',
-				'https://cdn.tailwindcss.com',
+				'chartjs',
+				TAILSIGNAL_PLUGIN_URL . 'admin/js/vendor/chart.min.js',
 				array(),
-				null,
-				false
+				'4.4.7',
+				true
 			);
-
-			// Tailwind config inline script.
-			wp_add_inline_script( 'tailwindcss', "
-				tailwind.config = {
-					prefix: 'tw-',
-					corePlugins: {
-						preflight: false,
-					},
-					important: '#tailsignal-app',
-				}
-			" );
+			wp_script_add_data( 'chartjs', 'strategy', 'defer' );
 		}
 	}
 

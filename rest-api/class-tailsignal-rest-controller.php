@@ -30,6 +30,8 @@ class TailSignal_REST_Controller {
 				'permission_callback' => '__return_true',
 				'args'                => $this->get_register_args(),
 			),
+			// Public: devices self-unregister. Expo tokens are cryptographically random
+			// (e.g., ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]), making enumeration infeasible.
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'unregister_device' ),
@@ -172,8 +174,25 @@ class TailSignal_REST_Controller {
 				'sanitize_callback' => 'sanitize_textarea_field',
 			),
 			'data'        => array(
-				'type'    => 'string',
-				'default' => null,
+				'type'              => 'string',
+				'default'           => null,
+				'sanitize_callback' => function( $value ) {
+					return is_string( $value ) ? wp_unslash( trim( $value ) ) : $value;
+				},
+				'validate_callback' => function( $value ) {
+					if ( null === $value || '' === $value ) {
+						return true;
+					}
+					$decoded = json_decode( $value );
+					if ( null === $decoded && JSON_ERROR_NONE !== json_last_error() ) {
+						return new WP_Error(
+							'tailsignal_invalid_json',
+							__( 'The data field must be valid JSON.', 'tailsignal' ),
+							array( 'status' => 400 )
+						);
+					}
+					return true;
+				},
 			),
 			'image_url'   => array(
 				'type'              => 'string',
@@ -198,8 +217,30 @@ class TailSignal_REST_Controller {
 				'default' => null,
 			),
 			'scheduled_at' => array(
-				'type'    => 'string',
-				'default' => null,
+				'type'              => 'string',
+				'default'           => null,
+				'sanitize_callback' => 'sanitize_text_field',
+				'validate_callback' => function( $value ) {
+					if ( null === $value || '' === $value ) {
+						return true;
+					}
+					$timestamp = strtotime( $value );
+					if ( false === $timestamp ) {
+						return new WP_Error(
+							'tailsignal_invalid_date',
+							__( 'Invalid date format for scheduled_at.', 'tailsignal' ),
+							array( 'status' => 400 )
+						);
+					}
+					if ( $timestamp <= time() ) {
+						return new WP_Error(
+							'tailsignal_past_date',
+							__( 'Scheduled time must be in the future.', 'tailsignal' ),
+							array( 'status' => 400 )
+						);
+					}
+					return true;
+				},
 			),
 		);
 	}
@@ -399,8 +440,11 @@ class TailSignal_REST_Controller {
 	public function export_devices( $request ) {
 		$devices = TailSignal_DB::get_devices_for_export();
 
-		$csv_data = array();
-		$csv_data[] = array(
+		// Build CSV string.
+		$output = fopen( 'php://temp', 'r+' );
+
+		// Header row.
+		fputcsv( $output, array(
 			'expo_token',
 			'device_type',
 			'device_model',
@@ -411,10 +455,10 @@ class TailSignal_REST_Controller {
 			'user_label',
 			'is_dev',
 			'created_at',
-		);
+		), ',', '"', '\\' );
 
 		foreach ( $devices as $device ) {
-			$csv_data[] = array(
+			fputcsv( $output, array_map( array( $this, 'sanitize_csv_value' ), array(
 				$device->expo_token,
 				$device->device_type,
 				$device->device_model,
@@ -425,23 +469,49 @@ class TailSignal_REST_Controller {
 				$device->user_label,
 				$device->is_dev,
 				$device->created_at,
-			);
+			) ), ',', '"', '\\' );
 		}
 
-		// Build CSV string.
-		$output = fopen( 'php://temp', 'r+' );
-		foreach ( $csv_data as $row ) {
-			fputcsv( $output, $row );
-		}
 		rewind( $output );
 		$csv = stream_get_contents( $output );
 		fclose( $output );
 
 		$response = new WP_REST_Response( $csv, 200 );
-		$response->header( 'Content-Type', 'text/csv' );
+		$response->header( 'Content-Type', 'text/csv; charset=utf-8' );
 		$response->header( 'Content-Disposition', 'attachment; filename="tailsignal-devices-' . gmdate( 'Y-m-d' ) . '.csv"' );
 
 		return $response;
+	}
+
+	/**
+	 * Serve CSV export as raw output instead of JSON.
+	 *
+	 * Hooked to rest_pre_serve_request to intercept CSV responses.
+	 *
+	 * @param bool             $served  Whether the request has been served.
+	 * @param WP_HTTP_Response $result  Response object.
+	 * @param WP_REST_Request  $request Request object.
+	 * @param WP_REST_Server   $server  Server object.
+	 * @return bool Whether the request has been served.
+	 */
+	public function serve_csv_response( $served, $result, $request, $server ) {
+		if ( $served || ! $result instanceof WP_REST_Response ) {
+			return $served;
+		}
+
+		$headers = $result->get_headers();
+		if ( empty( $headers['Content-Type'] ) || false === strpos( $headers['Content-Type'], 'text/csv' ) ) {
+			return $served;
+		}
+
+		// Send headers.
+		$server->send_headers( $result->get_headers() );
+		status_header( $result->get_status() );
+
+		// Output raw CSV data.
+		echo $result->get_data(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSV data, not HTML.
+
+		return true;
 	}
 
 	/**
@@ -461,7 +531,31 @@ class TailSignal_REST_Controller {
 			);
 		}
 
-		$file = fopen( $files['file']['tmp_name'], 'r' );
+		// Validate file type.
+		$file_info = $files['file'];
+		$extension = strtolower( pathinfo( $file_info['name'], PATHINFO_EXTENSION ) );
+		if ( 'csv' !== $extension ) {
+			return new WP_Error(
+				'tailsignal_invalid_file_type',
+				__( 'Only CSV files are accepted.', 'tailsignal' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$allowed_mimes = array( 'text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel' );
+		$finfo = finfo_open( FILEINFO_MIME_TYPE );
+		if ( $finfo ) {
+			$detected_mime = finfo_file( $finfo, $file_info['tmp_name'] );
+			if ( $detected_mime && ! in_array( $detected_mime, $allowed_mimes, true ) ) {
+				return new WP_Error(
+					'invalid_file',
+					__( 'Invalid file type.', 'tailsignal' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		$file = fopen( $file_info['tmp_name'], 'r' );
 		if ( ! $file ) {
 			return new WP_Error(
 				'tailsignal_file_error',
@@ -470,7 +564,7 @@ class TailSignal_REST_Controller {
 			);
 		}
 
-		$headers = fgetcsv( $file );
+		$headers = fgetcsv( $file, 0, ',', '"', '\\' );
 		if ( ! $headers ) {
 			fclose( $file );
 			return new WP_Error(
@@ -481,7 +575,7 @@ class TailSignal_REST_Controller {
 		}
 
 		$rows = array();
-		while ( ( $row = fgetcsv( $file ) ) !== false ) {
+		while ( ( $row = fgetcsv( $file, 0, ',', '"', '\\' ) ) !== false ) {
 			if ( count( $row ) === count( $headers ) ) {
 				$rows[] = array_combine( $headers, $row );
 			}
@@ -506,5 +600,18 @@ class TailSignal_REST_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * Sanitize a value for CSV export to prevent formula injection.
+	 *
+	 * @param mixed $value The cell value.
+	 * @return mixed Sanitized value.
+	 */
+	private function sanitize_csv_value( $value ) {
+		if ( is_string( $value ) && isset( $value[0] ) && in_array( $value[0], array( '=', '+', '-', '@' ), true ) ) {
+			$value = "'" . $value;
+		}
+		return $value;
 	}
 }

@@ -273,6 +273,7 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 
 		$wpdb->shouldReceive( 'get_row' )->andReturn( $notif );
 		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+		$wpdb->shouldReceive( 'query' )->andReturn( 0 );
 
 		$request = Mockery::mock( 'WP_REST_Request' );
 		$request->shouldReceive( 'get_param' )->with( 'title' )->andReturn( 'Test' );
@@ -420,7 +421,7 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 		$this->assertSame( 200, $response->get_status() );
 
 		$headers = $response->get_headers();
-		$this->assertSame( 'text/csv', $headers['Content-Type'] );
+		$this->assertStringContainsString( 'text/csv', $headers['Content-Type'] );
 		$this->assertStringContainsString( 'tailsignal-devices-', $headers['Content-Disposition'] );
 
 		$csv = $response->get_data();
@@ -454,8 +455,8 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 		// Create a temp CSV file.
 		$tmp = tmpfile();
 		$csv_path = stream_get_meta_data( $tmp )['uri'];
-		fputcsv( $tmp, array( 'expo_token', 'device_type', 'device_model', 'os_version', 'app_version', 'locale', 'timezone', 'user_label', 'is_dev', 'created_at' ) );
-		fputcsv( $tmp, array( 'ExponentPushToken[import1]', 'ios', 'iPhone', '18', '1.0', 'en', 'UTC', 'Test', '0', '2025-01-01' ) );
+		fputcsv( $tmp, array( 'expo_token', 'device_type', 'device_model', 'os_version', 'app_version', 'locale', 'timezone', 'user_label', 'is_dev', 'created_at' ), ',', '"', '\\' );
+		fputcsv( $tmp, array( 'ExponentPushToken[import1]', 'ios', 'iPhone', '18', '1.0', 'en', 'UTC', 'Test', '0', '2025-01-01' ), ',', '"', '\\' );
 		rewind( $tmp );
 
 		// import_devices calls - get_device_by_token check, insert for new.
@@ -466,7 +467,10 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 
 		$request = Mockery::mock( 'WP_REST_Request' );
 		$request->shouldReceive( 'get_file_params' )->andReturn( array(
-			'file' => array( 'tmp_name' => $csv_path ),
+			'file' => array(
+				'tmp_name' => $csv_path,
+				'name'     => 'devices.csv',
+			),
 		) );
 
 		$response = $this->controller->import_devices( $request );

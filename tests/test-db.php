@@ -425,7 +425,9 @@ class Test_TailSignal_DB extends TailSignal_TestCase {
 		$wpdb = Mockery::mock( 'wpdb' );
 		$wpdb->prefix = 'wp_';
 
-		$wpdb->shouldReceive( 'delete' )->times( 6 )->andReturn( 1 ); // 2 devices * 3 deletes each
+		// 3 batch DELETE queries (device_meta, device_groups, devices).
+		$wpdb->shouldReceive( 'prepare' )->times( 3 )->andReturn( 'prepared_query' );
+		$wpdb->shouldReceive( 'query' )->times( 3 )->andReturn( 2 );
 
 		$count = TailSignal_DB::bulk_delete_devices( array( 1, 2 ) );
 		$this->assertSame( 2, $count );
@@ -888,7 +890,8 @@ class Test_TailSignal_DB extends TailSignal_TestCase {
 		$wpdb = Mockery::mock( 'wpdb' );
 		$wpdb->prefix = 'wp_';
 
-		$wpdb->shouldReceive( 'update' )->twice()->andReturn( 1 );
+		$wpdb->shouldReceive( 'prepare' )->once()->andReturn( 'prepared_query' );
+		$wpdb->shouldReceive( 'query' )->once()->with( 'prepared_query' )->andReturn( 2 );
 
 		$count = TailSignal_DB::deactivate_tokens( array(
 			'ExponentPushToken[stale1]',

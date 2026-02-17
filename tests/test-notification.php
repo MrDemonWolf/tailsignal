@@ -485,6 +485,10 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		// update_notification.
 		$wpdb->shouldReceive( 'update' )->andReturn( 1 );
 
+		// deactivate_tokens uses prepare + query (batch UPDATE).
+		$wpdb->shouldReceive( 'prepare' )->andReturn( 'prepared' );
+		$wpdb->shouldReceive( 'query' )->andReturn( 0 );
+
 		// wp_schedule_single_event for receipt check.
 		Functions\expect( 'wp_schedule_single_event' )->andReturn( true );
 
@@ -538,6 +542,10 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 
 		// update_notification + insert_notification_history.
 		$wpdb->shouldReceive( 'update' )->andReturn( 1 );
+
+		// deactivate_tokens uses prepare + query (batch UPDATE).
+		$wpdb->shouldReceive( 'prepare' )->andReturn( 'prepared' );
+		$wpdb->shouldReceive( 'query' )->andReturn( 0 );
 
 		Functions\expect( 'wp_schedule_single_event' )->andReturn( true );
 
