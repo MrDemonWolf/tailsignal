@@ -1,6 +1,9 @@
-.PHONY: zip test clean
+.PHONY: zip test clean css
 
 COMPOSER := $(shell command -v composer 2>/dev/null || echo php composer.phar)
+
+css:
+	npx tailwindcss -i admin/css/tailwind-input.css -o admin/css/tailsignal-tailwind.css --minify
 
 zip:
 	@echo "Building TailSignal plugin ZIP..."

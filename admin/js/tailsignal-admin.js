@@ -146,8 +146,8 @@
 		$('#tailsignal-preview-body').text(body || 'Notification body text will appear here...');
 
 		var $img = $('#tailsignal-preview-image');
-		if (imageUrl) {
-			$img.css('background-image', 'url(' + imageUrl + ')').show();
+		if (imageUrl && /^https?:\/\/.+/i.test(imageUrl)) {
+			$img.css('background-image', 'url("' + imageUrl.replace(/["()]/g, '') + '")').show();
 		} else {
 			$img.hide().css('background-image', '');
 		}

@@ -1330,10 +1330,17 @@ class TailSignal_DB {
 				continue;
 			}
 
+			$token = sanitize_text_field( $row['expo_token'] );
+
+			if ( ! \ExpoSDK\Utils::isExpoPushToken( $token ) ) {
+				$results['skipped']++;
+				continue;
+			}
+
 			$existing = self::get_device_by_token( $row['expo_token'] );
 
 			$data = array(
-				'expo_token'   => sanitize_text_field( $row['expo_token'] ),
+				'expo_token'   => $token,
 				'device_type'  => sanitize_text_field( $row['device_type'] ?? '' ),
 				'device_model' => sanitize_text_field( $row['device_model'] ?? '' ),
 				'os_version'   => sanitize_text_field( $row['os_version'] ?? '' ),

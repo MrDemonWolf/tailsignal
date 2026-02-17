@@ -98,9 +98,17 @@ class TailSignal_Admin {
 		}
 
 		wp_enqueue_style(
+			'tailsignal-tailwind',
+			TAILSIGNAL_PLUGIN_URL . 'admin/css/tailsignal-tailwind.css',
+			array(),
+			TAILSIGNAL_VERSION,
+			'all'
+		);
+
+		wp_enqueue_style(
 			'tailsignal-admin',
 			TAILSIGNAL_PLUGIN_URL . 'admin/css/tailsignal-admin.css',
-			array(),
+			array( 'tailsignal-tailwind' ),
 			TAILSIGNAL_VERSION,
 			'all'
 		);
@@ -147,33 +155,11 @@ class TailSignal_Admin {
 		if ( 'toplevel_page_tailsignal' === $hook ) {
 			wp_enqueue_script(
 				'chartjs',
-				'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
+				TAILSIGNAL_PLUGIN_URL . 'admin/js/vendor/chart.min.js',
 				array(),
-				'4',
+				'4.4.7',
 				true
 			);
-		}
-
-		// Load Tailwind CSS via CDN on TailSignal admin pages only.
-		if ( $is_tailsignal ) {
-			wp_enqueue_script(
-				'tailwindcss',
-				'https://cdn.tailwindcss.com',
-				array(),
-				null,
-				false
-			);
-
-			// Tailwind config inline script.
-			wp_add_inline_script( 'tailwindcss', "
-				tailwind.config = {
-					prefix: 'tw-',
-					corePlugins: {
-						preflight: false,
-					},
-					important: '#tailsignal-app',
-				}
-			" );
 		}
 	}
 

@@ -30,6 +30,8 @@ class TailSignal_REST_Controller {
 				'permission_callback' => '__return_true',
 				'args'                => $this->get_register_args(),
 			),
+			// Public: devices self-unregister. Expo tokens are cryptographically random
+			// (e.g., ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]), making enumeration infeasible.
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'unregister_device' ),
@@ -527,6 +529,15 @@ class TailSignal_REST_Controller {
 			return new WP_Error(
 				'tailsignal_invalid_file_type',
 				__( 'Only CSV files are accepted.', 'tailsignal' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$allowed_mimes = array( 'text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel' );
+		if ( ! empty( $file_info['type'] ) && ! in_array( $file_info['type'], $allowed_mimes, true ) ) {
+			return new WP_Error(
+				'invalid_file',
+				__( 'Invalid file type.', 'tailsignal' ),
 				array( 'status' => 400 )
 			);
 		}
