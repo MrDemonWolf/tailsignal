@@ -590,19 +590,58 @@ class TailSignal_DB {
 	}
 
 	/**
+	 * Get all device summary stats in a single query.
+	 *
+	 * Returns total active, iOS count, Android count, and dev count
+	 * from one DB round-trip instead of three separate COUNT queries.
+	 *
+	 * @return array Associative array with total, ios, android, dev keys.
+	 */
+	public static function get_device_summary_stats() {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'tailsignal_devices';
+
+		$row = $wpdb->get_row(
+			"SELECT
+				COUNT(*) as total,
+				SUM(CASE WHEN device_type = 'ios' THEN 1 ELSE 0 END) as ios,
+				SUM(CASE WHEN device_type = 'android' THEN 1 ELSE 0 END) as android,
+				SUM(CASE WHEN is_dev = 1 THEN 1 ELSE 0 END) as dev
+			FROM {$table}
+			WHERE is_active = 1"
+		);
+
+		return array(
+			'total'   => $row ? (int) $row->total : 0,
+			'ios'     => $row ? (int) $row->ios : 0,
+			'android' => $row ? (int) $row->android : 0,
+			'dev'     => $row ? (int) $row->dev : 0,
+		);
+	}
+
+	/**
 	 * Bulk delete devices.
 	 *
 	 * @param array $device_ids Array of device IDs.
 	 * @return int Number of devices deleted.
 	 */
 	public static function bulk_delete_devices( $device_ids ) {
-		$count = 0;
-		foreach ( $device_ids as $id ) {
-			if ( self::delete_device( (int) $id ) ) {
-				$count++;
-			}
+		global $wpdb;
+
+		if ( empty( $device_ids ) ) {
+			return 0;
 		}
-		return $count;
+
+		$device_ids   = array_map( 'intval', $device_ids );
+		$prefix       = $wpdb->prefix . 'tailsignal_';
+		$placeholders = implode( ',', array_fill( 0, count( $device_ids ), '%d' ) );
+
+		// Batch delete related data in 3 queries instead of 3 per device.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}device_meta WHERE device_id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}device_groups WHERE device_id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}devices WHERE id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -614,26 +653,21 @@ class TailSignal_DB {
 	public static function deactivate_tokens( $tokens ) {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'tailsignal_devices';
-		$count = 0;
-
-		foreach ( $tokens as $token ) {
-			$result = $wpdb->update(
-				$table,
-				array(
-					'is_active'  => 0,
-					'updated_at' => current_time( 'mysql' ),
-				),
-				array( 'expo_token' => $token ),
-				array( '%d', '%s' ),
-				array( '%s' )
-			);
-			if ( $result ) {
-				$count++;
-			}
+		if ( empty( $tokens ) ) {
+			return 0;
 		}
 
-		return $count;
+		$table        = $wpdb->prefix . 'tailsignal_devices';
+		$now          = current_time( 'mysql' );
+		$placeholders = implode( ',', array_fill( 0, count( $tokens ), '%s' ) );
+
+		// Single UPDATE with WHERE IN instead of one query per token.
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$table} SET is_active = 0, updated_at = %s WHERE expo_token IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				array_merge( array( $now ), $tokens )
+			)
+		);
 	}
 
 	// ── Groups ──────────────────────────────────────────────────
@@ -863,6 +897,49 @@ class TailSignal_DB {
 				$device_id
 			)
 		);
+	}
+
+	/**
+	 * Get groups for multiple devices in a single query.
+	 *
+	 * Returns an associative array keyed by device_id, each containing
+	 * an array of group objects. Eliminates N+1 queries on list pages.
+	 *
+	 * @param array $device_ids Array of device IDs.
+	 * @return array Associative array of device_id => array of group objects.
+	 */
+	public static function get_devices_groups_bulk( $device_ids ) {
+		global $wpdb;
+
+		if ( empty( $device_ids ) ) {
+			return array();
+		}
+
+		$device_ids          = array_map( 'intval', $device_ids );
+		$groups_table        = $wpdb->prefix . 'tailsignal_groups';
+		$device_groups_table = $wpdb->prefix . 'tailsignal_device_groups';
+		$placeholders        = implode( ',', array_fill( 0, count( $device_ids ), '%d' ) );
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT dg.device_id, g.id, g.name, g.description FROM {$groups_table} g
+				INNER JOIN {$device_groups_table} dg ON g.id = dg.group_id
+				WHERE dg.device_id IN ({$placeholders})
+				ORDER BY g.name ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$device_ids
+			)
+		);
+
+		$map = array();
+		foreach ( $results as $row ) {
+			$did = (int) $row->device_id;
+			if ( ! isset( $map[ $did ] ) ) {
+				$map[ $did ] = array();
+			}
+			$map[ $did ][] = $row;
+		}
+
+		return $map;
 	}
 
 	// ── Notifications ───────────────────────────────────────────

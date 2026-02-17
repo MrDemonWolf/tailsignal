@@ -16,6 +16,13 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 class TailSignal_Devices_List_Table extends WP_List_Table {
 
 	/**
+	 * Bulk-loaded device groups map (device_id => groups array).
+	 *
+	 * @var array
+	 */
+	private $groups_map = array();
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -86,8 +93,8 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 			$badges .= ' <span class="tailsignal-badge tailsignal-badge-red">' . esc_html__( 'Inactive', 'tailsignal' ) . '</span>';
 		}
 
-		// Groups.
-		$groups = TailSignal_DB::get_device_groups( $item->id );
+		// Groups (pre-loaded in bulk via prepare_items).
+		$groups = isset( $this->groups_map[ $item->id ] ) ? $this->groups_map[ $item->id ] : array();
 		foreach ( $groups as $group ) {
 			$badges .= ' <span class="tailsignal-badge tailsignal-badge-blue">' . esc_html( $group->name ) . '</span>';
 		}
@@ -262,6 +269,12 @@ class TailSignal_Devices_List_Table extends WP_List_Table {
 
 		$this->items = $result['items'];
 
+		// Bulk-load groups for all devices on this page (1 query vs N).
+		if ( ! empty( $this->items ) ) {
+			$device_ids       = wp_list_pluck( $this->items, 'id' );
+			$this->groups_map = TailSignal_DB::get_devices_groups_bulk( $device_ids );
+		}
+
 		$this->set_pagination_args( array(
 			'total_items' => $result['total'],
 			'per_page'    => $per_page,
@@ -300,10 +313,11 @@ class TailSignal_Admin_Devices {
 			exit;
 		}
 
-		// Summary stats for the template.
-		$device_count    = TailSignal_DB::get_device_count();
-		$platform_counts = TailSignal_DB::get_device_count_by_platform();
-		$dev_count       = TailSignal_DB::get_dev_device_count();
+		// Summary stats — single query instead of 3 separate COUNTs.
+		$device_stats    = TailSignal_DB::get_device_summary_stats();
+		$device_count    = $device_stats['total'];
+		$platform_counts = array( 'ios' => $device_stats['ios'], 'android' => $device_stats['android'] );
+		$dev_count       = $device_stats['dev'];
 
 		include TAILSIGNAL_PLUGIN_DIR . 'admin/partials/devices.php';
 	}

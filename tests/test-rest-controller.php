@@ -273,6 +273,7 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 
 		$wpdb->shouldReceive( 'get_row' )->andReturn( $notif );
 		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+		$wpdb->shouldReceive( 'query' )->andReturn( 0 );
 
 		$request = Mockery::mock( 'WP_REST_Request' );
 		$request->shouldReceive( 'get_param' )->with( 'title' )->andReturn( 'Test' );

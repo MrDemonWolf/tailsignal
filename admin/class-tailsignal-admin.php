@@ -125,7 +125,7 @@ class TailSignal_Admin {
 			TAILSIGNAL_PLUGIN_URL . 'admin/js/tailsignal-admin.js',
 			array( 'jquery' ),
 			TAILSIGNAL_VERSION,
-			true
+			array( 'in_footer' => true, 'strategy' => 'defer' )
 		);
 
 		wp_localize_script( 'tailsignal-admin', 'tailsignal', array(
