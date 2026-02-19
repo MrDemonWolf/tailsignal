@@ -24,3 +24,6 @@ composer.phar
 
 # PHPUnit
 .phpunit.result.cache
+
+# Claude Code
+.claude
