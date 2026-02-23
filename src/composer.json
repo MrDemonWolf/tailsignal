@@ -1,0 +1,23 @@
+{
+    "name": "mrdemonwolf/tailsignal",
+    "description": "A self-hosted WordPress plugin using Expo to send custom push notifications.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "MrDemonWolf, Inc.",
+            "homepage": "https://github.com/mrdemonwolf"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ctwillie/expo-server-sdk-php": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {}
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

@@ -1,5 +1,6 @@
-# Dependencies (vendor is committed for distribution)
+# Dependencies (vendor is committed in src/ for distribution)
 /node_modules/
+/vendor/
 
 # Build output
 /build/
@@ -20,6 +21,7 @@ Thumbs.db
 
 # Composer
 composer.lock
+src/composer.lock
 composer.phar
 
 # PHPUnit
@@ -27,3 +29,9 @@ composer.phar
 
 # Claude Code
 .claude
+
+# Docs site
+docs/.next/
+docs/out/
+docs/.source/
+docs/node_modules/

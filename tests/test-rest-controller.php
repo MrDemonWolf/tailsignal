@@ -7,10 +7,10 @@
 
 use Brain\Monkey\Functions;
 
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-db.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-expo.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-notification.php';
-require_once dirname( __DIR__ ) . '/rest-api/class-tailsignal-rest-controller.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-db.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-expo.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-notification.php';
+require_once dirname( __DIR__ ) . '/src/rest-api/class-tailsignal-rest-controller.php';
 
 class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 

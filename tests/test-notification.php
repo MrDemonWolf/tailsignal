@@ -7,9 +7,9 @@
 
 use Brain\Monkey\Functions;
 
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-db.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-expo.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-notification.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-db.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-expo.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-notification.php';
 
 class Test_TailSignal_Notification extends TailSignal_TestCase {
 
@@ -49,7 +49,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_type = 'page';
 
 		Functions\expect( 'apply_filters' )
-			->with( 'tailsignal_post_types', array( 'post' ) )
+			->with( 'tailsignal_post_types', array( 'post', 'portfolio' ) )
 			->andReturn( array( 'post' ) );
 
 		$notification->on_post_published( 'publish', 'draft', $post );
@@ -66,7 +66,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_type = 'post';
 
 		Functions\expect( 'apply_filters' )
-			->with( 'tailsignal_post_types', array( 'post' ) )
+			->with( 'tailsignal_post_types', array( 'post', 'portfolio' ) )
 			->andReturn( array( 'post' ) );
 
 		Functions\expect( 'get_option' )
@@ -88,7 +88,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->ID        = 42;
 
 		Functions\expect( 'apply_filters' )
-			->with( 'tailsignal_post_types', array( 'post' ) )
+			->with( 'tailsignal_post_types', array( 'post', 'portfolio' ) )
 			->andReturn( array( 'post' ) );
 
 		Functions\expect( 'get_option' )
@@ -114,7 +114,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->ID        = 42;
 
 		Functions\expect( 'apply_filters' )
-			->with( 'tailsignal_post_types', array( 'post' ) )
+			->with( 'tailsignal_post_types', array( 'post', 'portfolio' ) )
 			->andReturn( array( 'post' ) );
 
 		Functions\expect( 'get_option' )
@@ -150,9 +150,10 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'Test Post';
 		$post->post_content = 'Content';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'apply_filters' )
-			->with( 'tailsignal_post_types', array( 'post' ) )
+			->with( 'tailsignal_post_types', array( 'post', 'portfolio' ) )
 			->andReturn( array( 'post' ) );
 
 		Functions\expect( 'get_option' )
@@ -221,6 +222,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'Hello World';
 		$post->post_content = 'This is the post content with several words to test the excerpt generation limit of twenty words max.';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_bloginfo' )
 			->with( 'name' )
@@ -262,6 +264,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'Test';
 		$post->post_content = implode( ' ', $words );
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_bloginfo' )->andReturn( 'Blog' );
 		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
@@ -287,6 +290,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'Test';
 		$post->post_content = 'Short content here';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_bloginfo' )->andReturn( 'Blog' );
 		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
@@ -311,6 +315,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'Test';
 		$post->post_content = 'Content';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_bloginfo' )->andReturn( 'Blog' );
 		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
@@ -335,6 +340,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'Test';
 		$post->post_content = 'Content';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_bloginfo' )->andReturn( 'Blog' );
 		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
@@ -358,6 +364,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'My Post';
 		$post->post_content = 'Post content here';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_post_meta' )->andReturnUsing( function( $id, $key, $single = false ) {
 			return '';
@@ -398,6 +405,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'My Post';
 		$post->post_content = 'Content';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_post_meta' )->andReturnUsing( function( $id, $key, $single = false ) {
 			$meta = array(
@@ -432,6 +440,7 @@ class Test_TailSignal_Notification extends TailSignal_TestCase {
 		$post->post_title   = 'My Post';
 		$post->post_content = 'Content';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		Functions\expect( 'get_post_meta' )->andReturnUsing( function( $id, $key, $single = false ) {
 			$meta = array(

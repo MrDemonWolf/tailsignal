@@ -157,8 +157,8 @@ class TailSignal_Admin {
 			),
 		) );
 
-		// Load WP Media Library on Send page.
-		if ( 'tailsignal_page_tailsignal-send' === $hook ) {
+		// Load WP Media Library on Send page and post editor.
+		if ( 'tailsignal_page_tailsignal-send' === $hook || $is_post_edit ) {
 			wp_enqueue_media();
 		}
 

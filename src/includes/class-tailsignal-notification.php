@@ -25,13 +25,18 @@ class TailSignal_Notification {
 		}
 
 		// Only for posts (not pages, custom types, etc. unless filtered).
-		$allowed_types = apply_filters( 'tailsignal_post_types', array( 'post' ) );
+		$allowed_types = apply_filters( 'tailsignal_post_types', array( 'post', 'portfolio' ) );
 		if ( ! in_array( $post->post_type, $allowed_types, true ) ) {
 			return;
 		}
 
-		// Check global auto-notify setting.
-		if ( '1' !== get_option( 'tailsignal_auto_notify', '1' ) ) {
+		// Check post-type-specific auto-notify setting.
+		if ( 'portfolio' === $post->post_type ) {
+			$auto_notify = get_option( 'tailsignal_portfolio_auto_notify', '1' );
+		} else {
+			$auto_notify = get_option( 'tailsignal_auto_notify', '1' );
+		}
+		if ( '1' !== $auto_notify ) {
 			return;
 		}
 
@@ -76,8 +81,22 @@ class TailSignal_Notification {
 		$custom_title = get_post_meta( $post->ID, '_tailsignal_custom_title', true );
 		$custom_body  = get_post_meta( $post->ID, '_tailsignal_custom_body', true );
 
-		$title = ! empty( $custom_title ) ? $custom_title : get_option( 'tailsignal_default_title', 'New from {site_name}' );
-		$body  = ! empty( $custom_body ) ? $custom_body : get_option( 'tailsignal_default_body', '{post_title}' );
+		// Use post-type-specific templates when no per-post override.
+		if ( ! empty( $custom_title ) ) {
+			$title = $custom_title;
+		} elseif ( 'portfolio' === $post->post_type ) {
+			$title = get_option( 'tailsignal_portfolio_default_title', 'New Project: {post_title}' );
+		} else {
+			$title = get_option( 'tailsignal_default_title', 'New from {site_name}' );
+		}
+
+		if ( ! empty( $custom_body ) ) {
+			$body = $custom_body;
+		} elseif ( 'portfolio' === $post->post_type ) {
+			$body = get_option( 'tailsignal_portfolio_default_body', '{post_title} by {author_name}' );
+		} else {
+			$body = get_option( 'tailsignal_default_body', '{post_title}' );
+		}
 
 		// Parse placeholders.
 		$title = $this->parse_placeholders( $title, $post );
@@ -87,15 +106,20 @@ class TailSignal_Notification {
 			'title' => $title,
 			'body'  => $body,
 			'data'  => wp_json_encode( array(
-				'post_id' => $post->ID,
-				'url'     => get_permalink( $post ),
+				'post_id'   => $post->ID,
+				'post_type' => $post->post_type,
+				'url'       => get_permalink( $post ),
 			) ),
 		);
 
 		// Featured image.
 		$include_image = get_post_meta( $post->ID, '_tailsignal_include_image', true );
 		if ( '' === $include_image ) {
-			$include_image = get_option( 'tailsignal_use_featured_image', '1' );
+			if ( 'portfolio' === $post->post_type ) {
+				$include_image = get_option( 'tailsignal_portfolio_use_featured_image', '1' );
+			} else {
+				$include_image = get_option( 'tailsignal_use_featured_image', '1' );
+			}
 		}
 
 		if ( '1' === $include_image && has_post_thumbnail( $post->ID ) ) {

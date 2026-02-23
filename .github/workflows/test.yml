@@ -26,8 +26,12 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Validate composer.json
+      - name: Validate root composer.json
         run: composer validate --strict
+
+      - name: Validate plugin composer.json
+        run: composer validate --strict
+        working-directory: src
 
       - name: Get Composer cache directory
         id: composer-cache
@@ -37,14 +41,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php-${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock', '**/composer.json') }}
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
 
-      - name: Install dependencies
+      - name: Install dev dependencies (root)
         run: composer install --prefer-dist --no-progress
+
+      - name: Install production dependencies (plugin)
+        run: composer install --prefer-dist --no-progress --no-dev
+        working-directory: src
 
       - name: Check for security vulnerabilities
         run: composer audit
+        working-directory: src
 
       - name: Run tests
         run: vendor/bin/phpunit

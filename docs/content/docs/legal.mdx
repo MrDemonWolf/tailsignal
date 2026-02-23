@@ -1,0 +1,55 @@
+---
+title: Legal
+description: Disclaimers, license, and legal information for TailSignal.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout type="warn" title="Work in Progress">
+  TailSignal is under active development and is provided "as is" without warranty of any kind. Use in production at your own risk.
+</Callout>
+
+## Disclaimer
+
+TailSignal is an open-source project provided for educational and practical use. The author(s) make no guarantees about the reliability, security, or fitness for any particular purpose of this software.
+
+## Limitation of Liability
+
+**The author(s) of TailSignal are not responsible for:**
+
+- Loss of data, revenue, or business arising from use of this software
+- Notification delivery failures or delays
+- Service interruptions from Expo Push Service or any third-party dependency
+- Security vulnerabilities or exploits
+- Any damages resulting from the use or inability to use this software
+
+**You use TailSignal entirely at your own risk.**
+
+## License
+
+TailSignal is licensed under the [GNU General Public License v2.0 or later](https://www.gnu.org/licenses/gpl-2.0.html).
+
+You are free to use, modify, and distribute this software under the terms of the GPL-2.0+ license.
+
+## Third-Party Services
+
+TailSignal uses the following third-party services:
+
+### Expo Push Service
+
+Notifications are sent through the [Expo Push Service](https://docs.expo.dev/push-notifications/overview/). Your Expo push tokens and notification content are transmitted to Expo's servers for delivery. Review [Expo's Terms of Service](https://expo.dev/terms) and [Privacy Policy](https://expo.dev/privacy).
+
+### ctwillie/expo-server-sdk-php
+
+TailSignal uses the [expo-server-sdk-php](https://github.com/ctwillie/expo-server-sdk-php) library to communicate with the Expo Push API.
+
+## Privacy
+
+TailSignal stores device information (Expo push tokens, device model, OS version, etc.) in your WordPress database. This data never leaves your server except when sending notifications through the Expo Push Service.
+
+You are responsible for:
+
+- Complying with applicable privacy laws (GDPR, CCPA, etc.)
+- Informing your users about data collection
+- Providing mechanisms for users to unregister their devices
+- Securing your WordPress installation

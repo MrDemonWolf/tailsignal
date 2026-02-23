@@ -1,0 +1,55 @@
+---
+title: Sending Notifications
+description: Send manual, automatic, and scheduled push notifications.
+---
+
+## Manual Send
+
+Go to **TailSignal > Send** to compose a notification:
+
+1. Enter a **Title** and **Body** (use placeholder buttons for quick-fill)
+2. Optionally add an **Image URL** or choose from the WordPress Media Library
+3. Select a **Target**: All devices, Dev devices, a Group, or specific devices
+4. Click **Signal the Pack** to send immediately
+
+### Live Preview
+
+The send page includes a live preview that updates as you type. Toggle between **iOS** and **Android** preview styles to see how your notification will appear on each platform.
+
+### Custom Data
+
+The Advanced section lets you include a JSON payload that your app receives with the notification. For auto-published posts, TailSignal automatically includes `post_id` and `post_type`. For manual sends, common keys include:
+
+- `post_id` — for deep linking to a specific post
+- `url` — for opening a web link
+- `badgeCount` — for updating the app badge
+
+## Auto-Notify
+
+When enabled in Settings, TailSignal automatically sends a notification when:
+
+- A **post** transitions from any status to `publish` for the first time
+- A **portfolio** item is published (if portfolio auto-notify is enabled)
+
+Auto-notifications use the configured templates and include `post_id`, `post_type`, and `url` in the data payload for deep linking.
+
+### Per-Post Control
+
+Each post has a TailSignal meta box in the editor where you can:
+
+- **Toggle notifications** on/off for that specific post
+- **Override the title and body** with custom text
+- **Control featured image** inclusion
+- **Quick Send** a notification for an already-published post
+
+## Scheduling
+
+To schedule a notification for later:
+
+1. On the Send page, select **Schedule** instead of **Now**
+2. Pick a date and time
+3. Click the send button (it changes to "Schedule")
+
+Scheduled notifications appear in the table below the form. You can cancel them before they send.
+
+Scheduling uses `wp_schedule_single_event` — make sure WP-Cron is running reliably on your site.

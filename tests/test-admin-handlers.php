@@ -7,12 +7,12 @@
 
 use Brain\Monkey\Functions;
 
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-db.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-expo.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-notification.php';
-require_once dirname( __DIR__ ) . '/admin/class-tailsignal-admin-send.php';
-require_once dirname( __DIR__ ) . '/admin/class-tailsignal-admin-groups.php';
-require_once dirname( __DIR__ ) . '/admin/class-tailsignal-meta-box.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-db.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-expo.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-notification.php';
+require_once dirname( __DIR__ ) . '/src/admin/class-tailsignal-admin-send.php';
+require_once dirname( __DIR__ ) . '/src/admin/class-tailsignal-admin-groups.php';
+require_once dirname( __DIR__ ) . '/src/admin/class-tailsignal-meta-box.php';
 
 class Test_TailSignal_Admin_Handlers extends TailSignal_TestCase {
 

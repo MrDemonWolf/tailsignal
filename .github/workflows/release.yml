@@ -32,11 +32,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php-${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock', '**/composer.json') }}
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
 
-      - name: Install dependencies
+      - name: Install dev dependencies (root)
         run: composer install --prefer-dist --no-progress
+
+      - name: Install production dependencies (plugin)
+        run: composer install --prefer-dist --no-progress --no-dev
+        working-directory: src
 
       - name: Run tests
         run: vendor/bin/phpunit
@@ -59,11 +63,12 @@ jobs:
 
       - name: Install production dependencies
         run: composer install --no-dev --optimize-autoloader --prefer-dist --no-progress
+        working-directory: src
 
       - name: Build ZIP
         run: |
           mkdir -p build
-          rsync -a --exclude-from='.distignore' . build/tailsignal/
+          rsync -a --exclude-from='src/.distignore' src/ build/tailsignal/
           cd build && zip -r tailsignal.zip tailsignal/ -x "*.DS_Store"
           rm -rf build/tailsignal
 

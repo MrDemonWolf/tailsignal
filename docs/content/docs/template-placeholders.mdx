@@ -1,0 +1,48 @@
+---
+title: Template Placeholders
+description: Available placeholders for notification title and body templates.
+---
+
+Use these placeholders in your notification title and body templates. They are replaced with actual values when a notification is sent for a post.
+
+## Available Placeholders
+
+| Placeholder | Resolves to | Example |
+|-------------|-------------|---------|
+| `{post_title}` | The post title | "My Awesome Post" |
+| `{post_excerpt}` | First 20 words of content | "This is the beginning of my post content..." |
+| `{site_name}` | WordPress site name | "MrDemonWolf" |
+| `{author_name}` | Post author display name | "Nate" |
+| `{category}` | Primary category name | "Technology" |
+
+## Examples
+
+### Default Templates
+
+**Title:** `New from {site_name}`
+**Result:** "New from MrDemonWolf"
+
+**Body:** `{post_title}`
+**Result:** "My Awesome Post"
+
+### Custom Template
+
+**Title:** `{site_name}: New {category} Post`
+**Result:** "MrDemonWolf: New Technology Post"
+
+**Body:** `{author_name} just published: {post_title}`
+**Result:** "Nate just published: My Awesome Post"
+
+### Portfolio Templates
+
+**Title:** `New Project: {post_title}`
+**Result:** "New Project: My App Design"
+
+**Body:** `{post_title} by {author_name}`
+**Result:** "My App Design by Nate"
+
+## Where Templates Apply
+
+- **Auto-publish notifications** — uses the configured templates from Settings
+- **Per-post overrides** — set in the TailSignal meta box on the post editor
+- **Manual sends** — you type the title and body directly (no placeholder expansion)

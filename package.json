@@ -1,10 +1,13 @@
 {
-	"name": "tailsignal",
-	"private": true,
-	"scripts": {
-		"build:css": "npx tailwindcss -i admin/css/tailwind-input.css -o admin/css/tailsignal-tailwind.css --minify"
-	},
-	"devDependencies": {
-		"tailwindcss": "^3.4"
-	}
+    "name": "tailsignal-monorepo",
+    "private": true,
+    "workspaces": [
+        "src",
+        "docs"
+    ],
+    "scripts": {
+        "build:css": "npm -w src run build:css",
+        "docs:dev": "npm -w docs run dev",
+        "docs:build": "npm -w docs run build"
+    }
 }

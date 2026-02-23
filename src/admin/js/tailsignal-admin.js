@@ -136,21 +136,44 @@
 		updateCharCount($(this));
 	});
 
-	// Live preview update
+	// Live preview update (iOS + Android)
 	$(document).on('input', '#tailsignal-title, #tailsignal-body, #tailsignal-image-url', function() {
 		var title = $('#tailsignal-title').val();
 		var body = $('#tailsignal-body').val();
 		var imageUrl = $('#tailsignal-image-url').val();
+		var defaultTitle = 'Notification Title';
+		var defaultBody = 'Notification body text will appear here...';
+		var sanitizedUrl = imageUrl ? 'url("' + imageUrl.replace(/["()]/g, '') + '")' : '';
+		var hasImage = imageUrl && /^https?:\/\/.+/i.test(imageUrl);
 
-		$('#tailsignal-preview-title').text(title || 'Notification Title');
-		$('#tailsignal-preview-body').text(body || 'Notification body text will appear here...');
-
+		// iOS preview
+		$('#tailsignal-preview-title').text(title || defaultTitle);
+		$('#tailsignal-preview-body').text(body || defaultBody);
 		var $img = $('#tailsignal-preview-image');
-		if (imageUrl && /^https?:\/\/.+/i.test(imageUrl)) {
-			$img.css('background-image', 'url("' + imageUrl.replace(/["()]/g, '') + '")').show();
+		if (hasImage) {
+			$img.css('background-image', sanitizedUrl).show();
 		} else {
 			$img.hide().css('background-image', '');
 		}
+
+		// Android preview
+		$('#tailsignal-preview-title-android').text(title || defaultTitle);
+		$('#tailsignal-preview-body-android').text(body || defaultBody);
+		var $imgAndroid = $('#tailsignal-preview-image-android');
+		if (hasImage) {
+			$imgAndroid.css('background-image', sanitizedUrl).show();
+		} else {
+			$imgAndroid.hide().css('background-image', '');
+		}
+	});
+
+	// Preview platform toggle (iOS / Android)
+	$(document).on('click', '.tailsignal-preview-toggle-btn', function() {
+		var platform = $(this).data('preview');
+		$('.tailsignal-preview-toggle-btn').removeClass('active');
+		$(this).addClass('active');
+		$('.tailsignal-preview-variant').hide();
+		$('#tailsignal-preview-' + platform).show();
 	});
 
 	// Fill Test Data button
@@ -166,6 +189,7 @@
 		e.preventDefault();
 
 		if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+			console.warn('TailSignal: wp.media not available. Media library scripts may not be loaded.');
 			return;
 		}
 

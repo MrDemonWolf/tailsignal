@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --color-fd-primary: 199 94% 49%;
+    --color-fd-background: 210 40% 98%;
+    --color-fd-foreground: 226 65% 12%;
+}
+
+.dark {
+    --color-fd-primary: 199 94% 49%;
+    --color-fd-background: 226 65% 12%;
+    --color-fd-foreground: 210 40% 98%;
+}

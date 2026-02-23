@@ -1,0 +1,67 @@
+---
+title: Configuration
+description: Configure TailSignal settings, templates, and integrations.
+---
+
+After activation, go to **TailSignal > Settings** in the WordPress admin.
+
+## General Settings
+
+### Dev Mode
+
+When enabled, all notification sends (auto and manual) only target devices flagged as "dev". Use this for testing without disturbing real users.
+
+**Workflow:**
+1. Toggle **Dev Mode ON** in Settings
+2. Go to **Devices** and flag your test devices as "dev"
+3. Test your notifications
+4. Toggle **Dev Mode OFF** when ready for production
+
+### Auto-Notify on New Posts
+
+When enabled, TailSignal automatically sends a push notification when a new post is published for the first time. Updates to existing posts do not trigger notifications.
+
+### Expo Access Token
+
+Optional authentication token from the [Expo dashboard](https://expo.dev). Required if your Expo project has push security enabled.
+
+## Notification Templates
+
+Templates control the default title and body for auto-publish notifications. Each post can override these via the TailSignal meta box in the post editor.
+
+### Default Title
+Default: `New from {site_name}`
+
+### Default Body
+Default: `{post_title}`
+
+### Include Featured Image
+When enabled, the post's featured image is sent as a rich notification on iOS and Android.
+
+See [Template Placeholders](/docs/template-placeholders) for all available placeholders.
+
+## Portfolio Templates
+
+Separate templates for portfolio post type notifications:
+
+| Setting | Default |
+|---------|---------|
+| Auto-notify on new portfolio | Enabled |
+| Default Title | `New Project: {post_title}` |
+| Default Body | `{post_title} by {author_name}` |
+| Include Featured Image | Enabled |
+
+## WordPress Options Reference
+
+| Option | Default | Purpose |
+|--------|---------|---------|
+| `tailsignal_auto_notify` | `'1'` | Auto-send on new post publish |
+| `tailsignal_expo_access_token` | `''` | Expo auth token |
+| `tailsignal_default_title` | `'New from {site_name}'` | Title template |
+| `tailsignal_default_body` | `'{post_title}'` | Body template |
+| `tailsignal_use_featured_image` | `'1'` | Include featured image |
+| `tailsignal_dev_mode` | `'0'` | Dev mode toggle |
+| `tailsignal_portfolio_auto_notify` | `'1'` | Auto-send on portfolio publish |
+| `tailsignal_portfolio_default_title` | `'New Project: {post_title}'` | Portfolio title template |
+| `tailsignal_portfolio_default_body` | `'{post_title} by {author_name}'` | Portfolio body template |
+| `tailsignal_portfolio_use_featured_image` | `'1'` | Portfolio featured image |

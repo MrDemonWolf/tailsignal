@@ -194,7 +194,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</label>
 							<textarea id="tailsignal-data" name="data" rows="3" class="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-px-3 tw-py-2 tw-text-sm tw-font-mono" placeholder='{ "screen": "article", "articleId": "123" }'></textarea>
 							<p class="tw-text-xs tw-text-gray-500 tw-mt-1 tw-m-0">
-								<?php esc_html_e( 'JSON payload sent to your app. Common keys: "screen" or "url" for deep linking, "badgeCount" for badge updates, "sound" for custom sounds, "channelId" for Android notification channels.', 'tailsignal' ); ?>
+								<?php esc_html_e( 'JSON payload sent to your app. For auto-published posts, TailSignal automatically includes post_id and post_type. Common keys for manual sends: post_id for deep linking, url for web links, badgeCount for badge updates.', 'tailsignal' ); ?>
 							</p>
 						</div>
 					</div>
@@ -215,20 +215,47 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<div class="tw-sticky tw-top-8">
 				<div class="tailsignal-card">
 					<div class="tailsignal-card-body">
-						<h3 class="tw-m-0 tw-mb-4 tailsignal-section-header"><?php esc_html_e( 'Preview', 'tailsignal' ); ?></h3>
-						<!-- iOS-style notification mockup -->
-						<div class="tailsignal-preview-card">
-							<div class="tailsignal-preview-header">
-								<span class="tailsignal-preview-icon">&#x1F43E;</span>
-								<span class="tailsignal-preview-app"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></span>
-								<span class="tailsignal-preview-time"><?php esc_html_e( 'now', 'tailsignal' ); ?></span>
+						<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+							<h3 class="tw-m-0 tailsignal-section-header"><?php esc_html_e( 'Preview', 'tailsignal' ); ?></h3>
+							<div class="tailsignal-preview-toggle">
+								<button type="button" class="tailsignal-preview-toggle-btn active" data-preview="ios">iOS</button>
+								<button type="button" class="tailsignal-preview-toggle-btn" data-preview="android">Android</button>
 							</div>
-							<div class="tailsignal-preview-body">
-								<div class="tailsignal-preview-text">
-									<div id="tailsignal-preview-title" class="tailsignal-preview-title"><?php esc_html_e( 'Notification Title', 'tailsignal' ); ?></div>
-									<div id="tailsignal-preview-body" class="tailsignal-preview-body-text"><?php esc_html_e( 'Notification body text will appear here...', 'tailsignal' ); ?></div>
+						</div>
+
+						<!-- iOS-style notification mockup -->
+						<div id="tailsignal-preview-ios" class="tailsignal-preview-variant">
+							<div class="tailsignal-preview-card">
+								<div class="tailsignal-preview-header">
+									<span class="tailsignal-preview-icon">&#x1F43E;</span>
+									<span class="tailsignal-preview-app"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></span>
+									<span class="tailsignal-preview-time"><?php esc_html_e( 'now', 'tailsignal' ); ?></span>
 								</div>
-								<div id="tailsignal-preview-image" class="tailsignal-preview-image" style="display:none;"></div>
+								<div class="tailsignal-preview-body">
+									<div class="tailsignal-preview-text">
+										<div id="tailsignal-preview-title" class="tailsignal-preview-title"><?php esc_html_e( 'Notification Title', 'tailsignal' ); ?></div>
+										<div id="tailsignal-preview-body" class="tailsignal-preview-body-text"><?php esc_html_e( 'Notification body text will appear here...', 'tailsignal' ); ?></div>
+									</div>
+									<div id="tailsignal-preview-image" class="tailsignal-preview-image" style="display:none;"></div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Android-style notification mockup -->
+						<div id="tailsignal-preview-android" class="tailsignal-preview-variant" style="display:none;">
+							<div class="tailsignal-preview-card-android">
+								<div class="tailsignal-preview-android-accent"></div>
+								<div class="tailsignal-preview-android-content">
+									<div class="tailsignal-preview-android-header">
+										<span class="tailsignal-preview-android-icon">&#x1F43E;</span>
+										<span class="tailsignal-preview-android-app"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></span>
+										<span class="tailsignal-preview-android-dot">&middot;</span>
+										<span class="tailsignal-preview-android-time"><?php esc_html_e( 'now', 'tailsignal' ); ?></span>
+									</div>
+									<div id="tailsignal-preview-title-android" class="tailsignal-preview-android-title"><?php esc_html_e( 'Notification Title', 'tailsignal' ); ?></div>
+									<div id="tailsignal-preview-body-android" class="tailsignal-preview-android-body"><?php esc_html_e( 'Notification body text will appear here...', 'tailsignal' ); ?></div>
+									<div id="tailsignal-preview-image-android" class="tailsignal-preview-android-image" style="display:none;"></div>
+								</div>
 							</div>
 						</div>
 					</div>

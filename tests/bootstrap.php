@@ -8,7 +8,7 @@
 // Define WordPress constants needed by plugin files.
 define( 'ABSPATH', '/tmp/wordpress/' );
 define( 'TAILSIGNAL_VERSION', '1.0.0' );
-define( 'TAILSIGNAL_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
+define( 'TAILSIGNAL_PLUGIN_DIR', dirname( __DIR__ ) . '/src/' );
 define( 'TAILSIGNAL_PLUGIN_URL', 'http://example.com/wp-content/plugins/tailsignal/' );
 define( 'TAILSIGNAL_PLUGIN_BASENAME', 'tailsignal/tailsignal.php' );
 
@@ -22,7 +22,7 @@ if ( ! file_exists( $wp_admin_dir . 'upgrade.php' ) ) {
 }
 
 // Load Composer autoloader.
-require_once dirname( __DIR__ ) . '/vendor/autoload.php';
+require_once dirname( __DIR__ ) . '/src/vendor/autoload.php';
 
 // Define WordPress stub classes for testing.
 if ( ! class_exists( 'WP_Error' ) ) {

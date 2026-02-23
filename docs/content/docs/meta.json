@@ -1,0 +1,17 @@
+{
+    "title": "Documentation",
+    "pages": [
+        "index",
+        "getting-started",
+        "configuration",
+        "sending-notifications",
+        "devices",
+        "groups",
+        "rest-api",
+        "mobile-integration",
+        "template-placeholders",
+        "troubleshooting",
+        "changelog",
+        "legal"
+    ]
+}

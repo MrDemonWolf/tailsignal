@@ -7,9 +7,9 @@
 
 use Brain\Monkey\Functions;
 
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-db.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-activator.php';
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-deactivator.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-db.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-activator.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-deactivator.php';
 
 class Test_TailSignal_Activator extends TailSignal_TestCase {
 
@@ -31,7 +31,7 @@ class Test_TailSignal_Activator extends TailSignal_TestCase {
 			->andReturn( false );
 
 		// add_option called for each default.
-		Functions\expect( 'add_option' )->times( 7 );
+		Functions\expect( 'add_option' )->times( 11 );
 
 		// get_role + add_cap.
 		$role = Mockery::mock( 'WP_Role' );
@@ -86,7 +86,7 @@ class Test_TailSignal_Activator extends TailSignal_TestCase {
 
 		Functions\expect( 'dbDelta' )->andReturn( array() );
 		Functions\expect( 'get_option' )->andReturn( false );
-		Functions\expect( 'add_option' )->times( 7 );
+		Functions\expect( 'add_option' )->times( 11 );
 
 		Functions\expect( 'get_role' )
 			->with( 'administrator' )

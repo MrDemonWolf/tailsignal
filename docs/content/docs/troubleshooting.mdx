@@ -1,0 +1,78 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for TailSignal.
+---
+
+## Notifications Not Sending
+
+### Dev Mode is ON
+
+The most common cause. When Dev Mode is enabled, notifications only go to devices flagged as "dev".
+
+**Fix:** Go to **TailSignal > Settings** and toggle Dev Mode OFF, or flag your devices as "dev" in the Devices page.
+
+### No Devices Registered
+
+Check **TailSignal > Devices** to verify devices are registered and active.
+
+### WP-Cron Not Running
+
+Scheduled notifications and receipt checking rely on WP-Cron. If your site has low traffic, WP-Cron may not fire reliably.
+
+**Fix:** Set up a real cron job:
+
+```bash
+*/5 * * * * curl -s https://yoursite.com/wp-cron.php > /dev/null 2>&1
+```
+
+Or use a service like [WP-Cron.com](https://www.wp-cron.com/).
+
+## 404 on REST API Endpoints
+
+### Permalinks
+
+TailSignal requires pretty permalinks to be enabled.
+
+**Fix:** Go to **Settings > Permalinks** and select any option other than "Plain". Click Save.
+
+### Plugin Not Activated
+
+The REST routes are only registered when the plugin is active.
+
+## Images Not Showing
+
+### External URL Blocked
+
+iOS and Android may block HTTP (non-HTTPS) image URLs.
+
+**Fix:** Ensure image URLs use HTTPS.
+
+### Image Too Large
+
+Very large images may be rejected by Expo or cause slow delivery.
+
+**Fix:** Use images under 1MB. WordPress "large" size (1024px) works well.
+
+### Choose Image Button Not Working
+
+The Choose Image button on the Send page requires the WordPress Media Library. If it doesn't open:
+
+1. Check browser console for JavaScript errors
+2. Ensure no plugin conflicts are blocking `wp.media`
+3. Try disabling other plugins temporarily
+
+## Capabilities / Access Denied
+
+### User Doesn't Have `tailsignal_manage`
+
+Only administrators get the `tailsignal_manage` capability on activation.
+
+**Fix:** Deactivate and reactivate the plugin, or manually add the capability using a plugin like Members.
+
+## Stale Tokens
+
+When Expo returns a `DeviceNotRegistered` error, TailSignal automatically deactivates the stale token. These devices appear as "Inactive" in the Devices list.
+
+## Receipt Check Failures
+
+TailSignal schedules a receipt check 15 minutes after each send. If WP-Cron isn't running, receipts may never be checked. This doesn't affect delivery — it only affects status tracking in the History page.

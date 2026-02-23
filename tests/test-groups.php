@@ -7,7 +7,7 @@
 
 use Brain\Monkey\Functions;
 
-require_once dirname( __DIR__ ) . '/includes/class-tailsignal-db.php';
+require_once dirname( __DIR__ ) . '/src/includes/class-tailsignal-db.php';
 
 class Test_TailSignal_Groups extends TailSignal_TestCase {
 

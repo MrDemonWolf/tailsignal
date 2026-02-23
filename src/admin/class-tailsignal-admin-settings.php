@@ -137,6 +137,84 @@ class TailSignal_Admin_Settings {
 				'description' => __( 'Sends post featured image as rich notification on iOS and Android.', 'tailsignal' ),
 			)
 		);
+
+		// Portfolio Templates section.
+		add_settings_section(
+			'tailsignal_portfolio_templates',
+			__( 'Portfolio Templates', 'tailsignal' ),
+			array( $this, 'render_portfolio_templates_section' ),
+			'tailsignal-settings'
+		);
+
+		register_setting( 'tailsignal_settings', 'tailsignal_portfolio_auto_notify', array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_checkbox' ),
+			'default'           => '1',
+		) );
+
+		add_settings_field(
+			'tailsignal_portfolio_auto_notify',
+			__( 'Auto-notify on new portfolio', 'tailsignal' ),
+			array( $this, 'render_toggle_field' ),
+			'tailsignal-settings',
+			'tailsignal_portfolio_templates',
+			array(
+				'name'        => 'tailsignal_portfolio_auto_notify',
+				'description' => __( 'Automatically send a push notification when a portfolio item is published.', 'tailsignal' ),
+			)
+		);
+
+		register_setting( 'tailsignal_settings', 'tailsignal_portfolio_default_title', array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => 'New Project: {post_title}',
+		) );
+
+		add_settings_field(
+			'tailsignal_portfolio_default_title',
+			__( 'Default Title', 'tailsignal' ),
+			array( $this, 'render_text_field' ),
+			'tailsignal-settings',
+			'tailsignal_portfolio_templates',
+			array(
+				'name' => 'tailsignal_portfolio_default_title',
+			)
+		);
+
+		register_setting( 'tailsignal_settings', 'tailsignal_portfolio_default_body', array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => '{post_title} by {author_name}',
+		) );
+
+		add_settings_field(
+			'tailsignal_portfolio_default_body',
+			__( 'Default Body', 'tailsignal' ),
+			array( $this, 'render_text_field' ),
+			'tailsignal-settings',
+			'tailsignal_portfolio_templates',
+			array(
+				'name' => 'tailsignal_portfolio_default_body',
+			)
+		);
+
+		register_setting( 'tailsignal_settings', 'tailsignal_portfolio_use_featured_image', array(
+			'type'              => 'string',
+			'sanitize_callback' => array( $this, 'sanitize_checkbox' ),
+			'default'           => '1',
+		) );
+
+		add_settings_field(
+			'tailsignal_portfolio_use_featured_image',
+			__( 'Include Featured Image', 'tailsignal' ),
+			array( $this, 'render_toggle_field' ),
+			'tailsignal-settings',
+			'tailsignal_portfolio_templates',
+			array(
+				'name'        => 'tailsignal_portfolio_use_featured_image',
+				'description' => __( 'Sends portfolio featured image as rich notification on iOS and Android.', 'tailsignal' ),
+			)
+		);
 	}
 
 	/**
@@ -151,6 +229,17 @@ class TailSignal_Admin_Settings {
 	 */
 	public function render_templates_section() {
 		echo '<p>' . esc_html__( 'These templates are used for auto-publish notifications. Each post can override them in the TailSignal meta box.', 'tailsignal' ) . '</p>';
+		echo '<p class="description">';
+		echo esc_html__( 'Available placeholders:', 'tailsignal' ) . ' ';
+		echo '<code>{post_title}</code> <code>{post_excerpt}</code> <code>{site_name}</code> <code>{author_name}</code> <code>{category}</code>';
+		echo '</p>';
+	}
+
+	/**
+	 * Render portfolio templates section description.
+	 */
+	public function render_portfolio_templates_section() {
+		echo '<p>' . esc_html__( 'These templates are used for auto-publish notifications on portfolio items.', 'tailsignal' ) . '</p>';
 		echo '<p class="description">';
 		echo esc_html__( 'Available placeholders:', 'tailsignal' ) . ' ';
 		echo '<code>{post_title}</code> <code>{post_excerpt}</code> <code>{site_name}</code> <code>{author_name}</code> <code>{category}</code>';

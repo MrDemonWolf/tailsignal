@@ -10,44 +10,52 @@ TailSignal is a self-hosted WordPress plugin that sends push notifications to mo
 - Expo Push API via `ctwillie/expo-server-sdk-php`
 - PHPUnit 9.x + Brain Monkey + Mockery for tests
 - Tailwind CSS (pre-compiled with `tw-` prefix) for admin UI
+- Fumadocs + Next.js for documentation site
 
-## File Structure
+## Repository Structure
 
 ```
-tailsignal.php                    # Plugin bootstrap (defines constants, loads files)
-uninstall.php                     # Clean removal of all tables, options, capabilities, post meta
-
-includes/
-  class-tailsignal.php            # Core orchestrator (loads deps, registers hooks)
-  class-tailsignal-loader.php     # Hook/filter registration helper
-  class-tailsignal-i18n.php       # Internationalization
-  class-tailsignal-db.php         # All database schema + CRUD (static methods)
-  class-tailsignal-activator.php  # Activation: create tables, set defaults, add caps
-  class-tailsignal-deactivator.php# Deactivation: clear cron events
-  class-tailsignal-expo.php       # Expo Push Service wrapper (singleton)
-  class-tailsignal-notification.php # Notification builder, sender, scheduler
-  class-tailsignal-cron.php       # WP-Cron receipt checking + scheduled sends
-
-rest-api/
-  class-tailsignal-rest-controller.php  # All REST endpoints under tailsignal/v1
-
-admin/
-  class-tailsignal-admin.php            # Menu registration, script/style enqueueing
-  class-tailsignal-admin-dashboard.php  # Dashboard stats page
-  class-tailsignal-admin-send.php       # Send/schedule notification + AJAX handlers
-  class-tailsignal-admin-devices.php    # Devices list (WP_List_Table)
-  class-tailsignal-admin-groups.php     # Groups management + AJAX handlers
-  class-tailsignal-admin-history.php    # Notification history (WP_List_Table)
-  class-tailsignal-admin-settings.php   # Settings page (WordPress Settings API)
-  class-tailsignal-meta-box.php         # Post editor meta box (auto-notify + quick send)
-  css/tailsignal-admin.css
-  js/tailsignal-admin.js
-  partials/*.php                        # Page template files
-
-tests/
-  bootstrap.php       # Defines WP constants, stub classes, loads autoloader
-  TestCase.php         # Base class with Brain Monkey setUp/tearDown + common stubs
-  test-*.php           # 10 test files, 167 tests total
+├── src/                              # WordPress plugin source
+│   ├── tailsignal.php                # Plugin bootstrap (defines constants, loads files)
+│   ├── uninstall.php                 # Clean removal of all tables, options, capabilities, post meta
+│   ├── composer.json                 # Production deps only (Expo SDK)
+│   ├── includes/
+│   │   ├── class-tailsignal.php            # Core orchestrator (loads deps, registers hooks)
+│   │   ├── class-tailsignal-loader.php     # Hook/filter registration helper
+│   │   ├── class-tailsignal-i18n.php       # Internationalization
+│   │   ├── class-tailsignal-db.php         # All database schema + CRUD (static methods)
+│   │   ├── class-tailsignal-activator.php  # Activation: create tables, set defaults, add caps
+│   │   ├── class-tailsignal-deactivator.php# Deactivation: clear cron events
+│   │   ├── class-tailsignal-expo.php       # Expo Push Service wrapper (singleton)
+│   │   ├── class-tailsignal-notification.php # Notification builder, sender, scheduler
+│   │   └── class-tailsignal-cron.php       # WP-Cron receipt checking + scheduled sends
+│   ├── rest-api/
+│   │   └── class-tailsignal-rest-controller.php  # All REST endpoints under tailsignal/v1
+│   ├── admin/
+│   │   ├── class-tailsignal-admin.php            # Menu registration, script/style enqueueing
+│   │   ├── class-tailsignal-admin-dashboard.php  # Dashboard stats page
+│   │   ├── class-tailsignal-admin-send.php       # Send/schedule notification + AJAX handlers
+│   │   ├── class-tailsignal-admin-devices.php    # Devices list (WP_List_Table)
+│   │   ├── class-tailsignal-admin-groups.php     # Groups management + AJAX handlers
+│   │   ├── class-tailsignal-admin-history.php    # Notification history (WP_List_Table)
+│   │   ├── class-tailsignal-admin-settings.php   # Settings page (WordPress Settings API)
+│   │   ├── class-tailsignal-meta-box.php         # Post editor meta box (auto-notify + quick send)
+│   │   ├── css/tailsignal-admin.css
+│   │   ├── js/tailsignal-admin.js
+│   │   └── partials/*.php                        # Page template files
+│   └── vendor/                       # Composer dependencies (committed for distribution)
+├── docs/                             # Fumadocs documentation site
+│   ├── content/docs/                 # MDX documentation pages
+│   ├── src/                          # Next.js app source
+│   └── package.json
+├── tests/
+│   ├── bootstrap.php       # Defines WP constants, stub classes, loads autoloader from src/
+│   ├── TestCase.php         # Base class with Brain Monkey setUp/tearDown + common stubs
+│   └── test-*.php           # 10 test files
+├── composer.json             # Dev dependencies (PHPUnit, Brain Monkey, Mockery)
+├── package.json              # npm workspaces (src + docs)
+├── Makefile                  # Build commands
+└── phpunit.xml.dist          # PHPUnit configuration
 ```
 
 ## Code Style
@@ -88,6 +96,10 @@ tests/
 | `tailsignal_use_featured_image` | `'1'` | Include post featured image |
 | `tailsignal_dev_mode` | `'0'` | Only send to is_dev=1 devices |
 | `tailsignal_db_version` | `TAILSIGNAL_VERSION` | Schema migration tracking |
+| `tailsignal_portfolio_auto_notify` | `'1'` | Auto-send on portfolio publish |
+| `tailsignal_portfolio_default_title` | `'New Project: {post_title}'` | Portfolio title template |
+| `tailsignal_portfolio_default_body` | `'{post_title} by {author_name}'` | Portfolio body template |
+| `tailsignal_portfolio_use_featured_image` | `'1'` | Portfolio featured image |
 
 ## REST API Endpoints
 
@@ -120,6 +132,7 @@ Used in notification title/body templates:
 - Mockery mocks `$wpdb` and Expo SDK
 - `tests/bootstrap.php` defines stub classes: `WP_Error`, `WP_REST_Server`, `WP_REST_Response`, `WP_REST_Request`
 - `tests/TestCase.php` stubs common WP functions: `sanitize_text_field`, `esc_html`, `wp_parse_args`, `current_time`, etc.
+- `tests/bootstrap.php` loads autoloader from `src/vendor/autoload.php`
 
 ### Testing patterns
 
@@ -131,12 +144,13 @@ Used in notification title/body templates:
 
 ## Building
 
-- `make css` — compiles Tailwind CSS (`npm run build:css`)
-- `make zip` — produces `build/tailsignal.zip` (production, no dev deps)
-- `make test` — installs deps and runs PHPUnit
+- `make css` — compiles Tailwind CSS (via npm workspace)
+- `make zip` — produces `build/tailsignal.zip` from `src/` (production, no dev deps)
+- `make test` — installs root dev deps and runs PHPUnit
 - `make clean` — removes build directory
-- `.distignore` controls what's excluded from the ZIP
-- `npm run build:css` — compiles Tailwind utilities to `admin/css/tailsignal-tailwind.css`
+- `src/.distignore` controls what's excluded from the ZIP
+- `npm run docs:dev` — local docs dev server
+- `npm run docs:build` — static docs export to `docs/out/`
 
 ## CI/CD (GitHub Actions)
 
@@ -145,11 +159,15 @@ Used in notification title/body templates:
 | `test.yml` | Push/PR to main | Tests on PHP 7.4, 8.0, 8.1, 8.2, 8.3 + composer validate + composer audit |
 | `build-zip.yml` | PR to main only | Builds plugin ZIP as artifact (dev builds) |
 | `release.yml` | GitHub release published | Runs full test matrix, then builds and attaches ZIP to release |
+| `deploy-docs.yml` | Push to main (docs/**) | Builds and deploys docs to GitHub Pages |
 
 ## Key Patterns
 
 - Hooks registered via `TailSignal_Loader` (actions + filters arrays, fired in `run()`)
 - Post notifications hook into `transition_post_status` (detects `publish` transition, not updates)
+- Portfolio post type supported alongside posts (filterable via `tailsignal_post_types`)
+- Post-type-specific templates: portfolio uses `tailsignal_portfolio_*` options
+- Notification data includes `post_id`, `post_type`, and `url` for deep linking
 - Scheduling uses `wp_schedule_single_event` with `tailsignal_send_scheduled` hook
 - Receipt checking via WP-Cron 15 minutes after each send
 - Expo SDK auto-chunks to 100 tokens per request (600/sec rate limit)
@@ -161,3 +179,4 @@ Used in notification title/body templates:
 - Batch DB queries: `get_device_summary_stats()`, `get_devices_groups_bulk()` to avoid N+1
 - Additional DB methods: `get_monthly_notification_stats()`, `delete_all_notifications()`, `import_devices()`
 - History page has `handle_delete_all()` AJAX handler for bulk notification deletion
+- Send page has iOS/Android preview toggle

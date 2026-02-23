@@ -1,0 +1,10 @@
+{
+	"name": "tailsignal",
+	"private": true,
+	"scripts": {
+		"build:css": "npx tailwindcss -i admin/css/tailwind-input.css -o admin/css/tailsignal-tailwind.css --minify"
+	},
+	"devDependencies": {
+		"tailwindcss": "^3.4"
+	}
+}

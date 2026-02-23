@@ -1,19 +1,19 @@
 .PHONY: zip test clean css
 
-COMPOSER := $(shell command -v composer 2>/dev/null || echo php composer.phar)
+COMPOSER := $(shell command -v composer 2>/dev/null || echo php src/composer.phar)
 
 css:
-	npx tailwindcss -i admin/css/tailwind-input.css -o admin/css/tailsignal-tailwind.css --minify
+	npm -w src run build:css
 
 zip:
 	@echo "Building TailSignal plugin ZIP..."
-	$(COMPOSER) install --no-dev --optimize-autoloader --quiet
+	cd src && $(COMPOSER) install --no-dev --optimize-autoloader --quiet
 	mkdir -p build
 	rm -rf build/tailsignal build/tailsignal.zip
-	rsync -a --exclude-from='.distignore' . build/tailsignal/
+	rsync -a --exclude-from='src/.distignore' src/ build/tailsignal/
 	cd build && zip -r tailsignal.zip tailsignal/ -x "*.DS_Store"
 	rm -rf build/tailsignal
-	$(COMPOSER) install --quiet
+	cd src && $(COMPOSER) install --quiet 2>/dev/null || true
 	@echo "Built: build/tailsignal.zip"
 
 test:

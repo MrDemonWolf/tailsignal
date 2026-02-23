@@ -1,0 +1,133 @@
+---
+title: REST API
+description: Full reference for all TailSignal REST API endpoints.
+---
+
+All endpoints are under the `tailsignal/v1` namespace.
+
+## Public Endpoints
+
+### Register Device
+
+```
+POST /wp-json/tailsignal/v1/register
+```
+
+Register a new device or update an existing one.
+
+**Request Body:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `expo_token` | string | Yes | Expo push token (`ExponentPushToken[...]`) |
+| `device_type` | string | Yes | `ios` or `android` |
+| `device_model` | string | No | Hardware model (e.g., "iPhone 16 Pro") |
+| `os_version` | string | No | OS version (e.g., "iOS 18.2") |
+| `app_version` | string | No | App version (e.g., "1.2.0") |
+| `locale` | string | No | Device locale (e.g., "en-US") |
+| `timezone` | string | No | Device timezone (e.g., "America/Chicago") |
+| `user_label` | string | No | Friendly name (e.g., "MrDemonWolf - iPhone") |
+
+**Response:** `201 Created`
+
+```json
+{
+    "success": true,
+    "device_id": 42
+}
+```
+
+### Unregister Device
+
+```
+DELETE /wp-json/tailsignal/v1/register
+```
+
+**Request Body:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `expo_token` | string | Yes | The token to unregister |
+
+**Response:** `200 OK`
+
+```json
+{
+    "success": true,
+    "message": "Device unregistered."
+}
+```
+
+### Registration Status
+
+```
+GET /wp-json/tailsignal/v1/register?expo_token=ExponentPushToken[xxx]
+```
+
+Check if a device is registered.
+
+**Response:** `200 OK`
+
+```json
+{
+    "registered": true,
+    "device_id": 42
+}
+```
+
+## Admin Endpoints
+
+All admin endpoints require the `tailsignal_manage` capability (granted to administrators on activation).
+
+### Send Notification
+
+```
+POST /wp-json/tailsignal/v1/send
+```
+
+**Request Body:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `title` | string | Yes | Notification title |
+| `body` | string | Yes | Notification body |
+| `data` | string | No | Custom JSON data payload |
+| `image_url` | string | No | Image URL for rich notifications |
+| `target_type` | string | No | `all`, `dev`, `group`, or `specific` (default: `all`) |
+| `target_ids` | array | No | Group IDs or device IDs |
+| `post_id` | integer | No | Link notification to a post |
+| `scheduled_at` | string | No | Schedule for future delivery (datetime string) |
+
+**Response:** `200 OK`
+
+```json
+{
+    "success": true,
+    "notification_id": 15,
+    "message": "Notification sent to 42 devices."
+}
+```
+
+### Get Statistics
+
+```
+GET /wp-json/tailsignal/v1/stats
+```
+
+Returns dashboard statistics including device counts, monthly sends, success rate, and dev mode status.
+
+### Export Devices
+
+```
+GET /wp-json/tailsignal/v1/devices/export
+```
+
+Downloads all devices as a CSV file.
+
+### Import Devices
+
+```
+POST /wp-json/tailsignal/v1/devices/import
+```
+
+Import devices from a CSV file upload. Handles duplicates via upsert. Send as `multipart/form-data` with a `file` field.

@@ -1,0 +1,52 @@
+---
+title: Devices
+description: Manage registered devices, export/import, and device actions.
+---
+
+## Device List
+
+Go to **TailSignal > Devices** to view all registered devices. The list shows:
+
+- **Label** — friendly name set by the app or admin
+- **Token** — Expo push token (truncated)
+- **Platform** — iOS or Android with platform badge
+- **Model** — device hardware model
+- **Status** — Active or Inactive
+- **Dev** — whether the device is flagged for dev mode
+- **Registered** — when the device first registered
+
+## Actions
+
+### Edit Label
+
+Click the edit icon to set a friendly label for a device (e.g., "Nate's iPhone").
+
+### Toggle Dev Flag
+
+Click the dev toggle to flag/unflag a device for Dev Mode testing.
+
+### Delete
+
+Remove a device from the database. This does not unregister the Expo push token — the app can re-register.
+
+## Search
+
+Use the search box to filter devices by label, token, or model.
+
+## CSV Export
+
+Click **Export All Devices (CSV)** on the Settings page to download all devices. The CSV includes:
+
+```
+expo_token,device_type,device_model,os_version,app_version,locale,timezone,user_label,is_dev
+ExponentPushToken[xxxxx],ios,iPhone 16 Pro,iOS 18.2,1.0.0,en-US,America/Chicago,My Device,0
+```
+
+## CSV Import
+
+1. Go to **TailSignal > Devices**
+2. Click **Import Devices (CSV)**
+3. Upload a CSV file matching the export format
+4. Existing tokens are updated (upsert), new tokens are created
+
+The import validates Expo token format and skips invalid entries.

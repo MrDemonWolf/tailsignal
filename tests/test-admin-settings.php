@@ -7,7 +7,7 @@
 
 use Brain\Monkey\Functions;
 
-require_once dirname( __DIR__ ) . '/admin/class-tailsignal-admin-settings.php';
+require_once dirname( __DIR__ ) . '/src/admin/class-tailsignal-admin-settings.php';
 
 class Test_TailSignal_Admin_Settings extends TailSignal_TestCase {
 
@@ -25,9 +25,9 @@ class Test_TailSignal_Admin_Settings extends TailSignal_TestCase {
 	 * Test register_settings registers sections and fields.
 	 */
 	public function test_register_settings() {
-		Functions\expect( 'add_settings_section' )->twice(); // General + Templates.
-		Functions\expect( 'register_setting' )->times( 6 );  // 6 settings registered.
-		Functions\expect( 'add_settings_field' )->times( 6 ); // 6 fields.
+		Functions\expect( 'add_settings_section' )->times( 3 ); // General + Templates + Portfolio Templates.
+		Functions\expect( 'register_setting' )->times( 10 );  // 10 settings registered.
+		Functions\expect( 'add_settings_field' )->times( 10 ); // 10 fields.
 
 		$this->settings->register_settings();
 		$this->assertTrue( true );

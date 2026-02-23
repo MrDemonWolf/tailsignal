@@ -1,0 +1,41 @@
+---
+title: Getting Started
+description: Install and activate TailSignal on your WordPress site.
+---
+
+## Requirements
+
+- **PHP** 7.4 or higher
+- **WordPress** 6.0 or higher
+- An **Expo/React Native** mobile app that uses Expo Push Tokens
+
+## Install from ZIP
+
+1. Download `tailsignal.zip` from the [latest release](https://github.com/MrDemonWolf/tailsignal/releases/latest)
+2. In WordPress admin, go to **Plugins > Add New > Upload Plugin**
+3. Upload `tailsignal.zip` and click **Install Now**
+4. Click **Activate**
+
+## Manual Install
+
+1. Clone or download the repository
+2. Run `composer install --no-dev --optimize-autoloader` in the `src/` directory
+3. Copy the plugin files to `/wp-content/plugins/tailsignal/`
+4. Activate via the WordPress admin
+
+## What Happens on Activation
+
+When TailSignal is activated, it:
+
+1. **Creates 6 database tables** for devices, groups, notifications, and metadata
+2. **Sets default options** for auto-notify, templates, and dev mode
+3. **Adds the `tailsignal_manage` capability** to the Administrator role
+4. **Registers WP-Cron hooks** for scheduled notifications and receipt checking
+
+You'll see a new **TailSignal** menu item in your WordPress admin sidebar with pages for Dashboard, Send, Devices, Groups, History, and Settings.
+
+## Next Steps
+
+- [Configure your settings](/docs/configuration)
+- [Connect your mobile app](/docs/mobile-integration)
+- [Send your first notification](/docs/sending-notifications)
