@@ -44,7 +44,7 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 	}
 
 	/**
-	 * Test build_message with image URL.
+	 * Test build_message with image URL uses richContent field.
 	 */
 	public function test_build_message_with_image() {
 		$message = TailSignal_Expo::build_message( array(
@@ -54,14 +54,14 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 		) );
 
 		$array = $message->toArray();
-		$this->assertArrayHasKey( 'image', $array );
-		$this->assertSame( 'https://example.com/image.jpg', $array['image'] );
+		$this->assertArrayHasKey( 'richContent', $array );
+		$this->assertSame( 'https://example.com/image.jpg', $array['richContent']['image'] );
 	}
 
 	/**
-	 * Test build_message with image URL sets top-level image field.
+	 * Test build_message with image URL sets richContent field (not top-level image).
 	 */
-	public function test_build_message_with_image_sets_top_level_field() {
+	public function test_build_message_with_image_sets_rich_content_field() {
 		$message = TailSignal_Expo::build_message( array(
 			'title'     => 'Test',
 			'body'      => 'Body',
@@ -69,7 +69,8 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 		) );
 
 		$array = $message->toArray();
-		$this->assertSame( 'https://example.com/image.jpg', $array['image'] );
+		$this->assertSame( 'https://example.com/image.jpg', $array['richContent']['image'] );
+		$this->assertArrayNotHasKey( 'image', $array );
 		$this->assertArrayNotHasKey( 'data', $array );
 	}
 
@@ -131,7 +132,7 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 
 		$array = $message->toArray();
 		$this->assertSame( 42, $array['data']['post_id'] );
-		$this->assertSame( 'https://example.com/img.jpg', $array['image'] );
+		$this->assertSame( 'https://example.com/img.jpg', $array['richContent']['image'] );
 	}
 
 	/**

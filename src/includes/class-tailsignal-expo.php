@@ -14,39 +14,39 @@ use ExpoSDK\ExpoMessage;
 use ExpoSDK\Utils;
 
 /**
- * Extended ExpoMessage that supports the top-level "image" field
- * for rich push notifications (not supported by the SDK natively).
+ * Extended ExpoMessage that supports the "richContent" field
+ * for rich push notifications with image previews on iOS and Android.
  */
 class TailSignal_ExpoMessage extends ExpoMessage {
 
 	/**
-	 * Image URL for rich notification.
+	 * Rich content payload (e.g. image URL).
 	 *
-	 * @var string|null
+	 * @var array|null
 	 */
-	private $image = null;
+	private $richContent = null;
 
 	/**
-	 * Set the image URL.
+	 * Set the rich content payload.
 	 *
-	 * @param string|null $image Image URL.
+	 * @param array|null $richContent Rich content data.
 	 * @return $this
 	 */
-	public function setImage( $image ) {
-		$this->image = $image;
+	public function setRichContent( $richContent ) {
+		$this->richContent = $richContent;
 		return $this;
 	}
 
 	/**
-	 * Convert to array, including the image field.
+	 * Convert to array, including the richContent field.
 	 *
 	 * @return array
 	 */
 	public function toArray(): array {
 		$attributes = parent::toArray();
 
-		if ( null !== $this->image ) {
-			$attributes['image'] = $this->image;
+		if ( null !== $this->richContent ) {
+			$attributes['richContent'] = $this->richContent;
 		}
 
 		return $attributes;
@@ -124,10 +124,10 @@ class TailSignal_Expo {
 			$attributes['data'] = $data;
 		}
 
-		// Rich notification with image — set as top-level Expo API field.
+		// Rich notification with image via Expo's richContent field.
 		// mutableContent is required for iOS to process the image attachment.
 		if ( ! empty( $params['image_url'] ) ) {
-			$attributes['image']          = $params['image_url'];
+			$attributes['richContent']    = array( 'image' => $params['image_url'] );
 			$attributes['mutableContent'] = true;
 		}
 
