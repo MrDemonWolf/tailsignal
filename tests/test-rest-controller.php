@@ -28,7 +28,7 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 	 * Test register_routes registers all endpoints.
 	 */
 	public function test_register_routes() {
-		Functions\expect( 'register_rest_route' )->times( 5 );
+		Functions\expect( 'register_rest_route' )->times( 6 );
 
 		$this->controller->register_routes();
 		$this->assertTrue( true );

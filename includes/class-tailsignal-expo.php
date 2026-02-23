@@ -13,6 +13,46 @@ use ExpoSDK\Expo;
 use ExpoSDK\ExpoMessage;
 use ExpoSDK\Utils;
 
+/**
+ * Extended ExpoMessage that supports the top-level "image" field
+ * for rich push notifications (not supported by the SDK natively).
+ */
+class TailSignal_ExpoMessage extends ExpoMessage {
+
+	/**
+	 * Image URL for rich notification.
+	 *
+	 * @var string|null
+	 */
+	private $image = null;
+
+	/**
+	 * Set the image URL.
+	 *
+	 * @param string|null $image Image URL.
+	 * @return $this
+	 */
+	public function setImage( $image ) {
+		$this->image = $image;
+		return $this;
+	}
+
+	/**
+	 * Convert to array, including the image field.
+	 *
+	 * @return array
+	 */
+	public function toArray(): array {
+		$attributes = parent::toArray();
+
+		if ( null !== $this->image ) {
+			$attributes['image'] = $this->image;
+		}
+
+		return $attributes;
+	}
+}
+
 class TailSignal_Expo {
 
 	/**
@@ -80,19 +120,18 @@ class TailSignal_Expo {
 			}
 		}
 
-		// Rich notification with image.
-		if ( ! empty( $params['image_url'] ) ) {
-			$data['richContent'] = array(
-				'image' => $params['image_url'],
-			);
-			$attributes['mutableContent'] = true;
-		}
-
 		if ( ! empty( $data ) ) {
 			$attributes['data'] = $data;
 		}
 
-		return new ExpoMessage( $attributes );
+		// Rich notification with image — set as top-level Expo API field.
+		// mutableContent is required for iOS to process the image attachment.
+		if ( ! empty( $params['image_url'] ) ) {
+			$attributes['image']          = $params['image_url'];
+			$attributes['mutableContent'] = true;
+		}
+
+		return new TailSignal_ExpoMessage( $attributes );
 	}
 
 	/**

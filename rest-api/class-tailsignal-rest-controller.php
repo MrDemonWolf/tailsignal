@@ -46,6 +46,20 @@ class TailSignal_REST_Controller {
 			),
 		) );
 
+		// Check registration status (public — token is proof of ownership).
+		register_rest_route( $this->namespace, '/register/status', array(
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => array( $this, 'check_registration_status' ),
+			'permission_callback' => '__return_true',
+			'args'                => array(
+				'expo_token' => array(
+					'required'          => true,
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		) );
+
 		// Send notification (admin only).
 		register_rest_route( $this->namespace, '/send', array(
 			'methods'             => WP_REST_Server::CREATABLE,
@@ -311,6 +325,35 @@ class TailSignal_REST_Controller {
 			array(
 				'success' => true,
 				'message' => __( 'Device unregistered successfully.', 'tailsignal' ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Check if a device token is registered and active.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return WP_REST_Response
+	 */
+	public function check_registration_status( $request ) {
+		$expo_token = $request->get_param( 'expo_token' );
+		$device     = TailSignal_DB::get_device_by_token( $expo_token );
+
+		if ( ! $device ) {
+			return new WP_REST_Response(
+				array(
+					'registered' => false,
+					'active'     => false,
+				),
+				200
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'registered' => true,
+				'active'     => (bool) $device->is_active,
 			),
 			200
 		);
