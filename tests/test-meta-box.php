@@ -92,10 +92,10 @@ class Test_TailSignal_Meta_Box extends TailSignal_TestCase {
 	 */
 	public function test_add_meta_box() {
 		Functions\expect( 'apply_filters' )
-			->with( 'tailsignal_post_types', array( 'post' ) )
-			->andReturn( array( 'post' ) );
+			->with( 'tailsignal_post_types', array( 'post', 'portfolio' ) )
+			->andReturn( array( 'post', 'portfolio' ) );
 
-		Functions\expect( 'add_meta_box' )->once();
+		Functions\expect( 'add_meta_box' )->twice();
 
 		$this->meta_box->add_meta_box();
 		$this->assertTrue( true );

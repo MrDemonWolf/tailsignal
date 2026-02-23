@@ -476,6 +476,7 @@ class Test_TailSignal_Admin_Handlers extends TailSignal_TestCase {
 		$post->post_title   = 'Test Post';
 		$post->post_content = 'Content';
 		$post->post_author  = 1;
+		$post->post_type    = 'post';
 
 		$_POST = array(
 			'post_id'     => '10',

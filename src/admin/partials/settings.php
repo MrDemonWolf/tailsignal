@@ -22,9 +22,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<form method="post" action="options.php">
 		<?php settings_fields( 'tailsignal_settings' ); ?>
 
-		<div class="tailsignal-settings-section">
-			<?php do_settings_sections( 'tailsignal-settings' ); ?>
-		</div>
+		<?php
+		global $wp_settings_sections, $wp_settings_fields;
+		$page = 'tailsignal-settings';
+		if ( isset( $wp_settings_sections[ $page ] ) ) {
+			foreach ( $wp_settings_sections[ $page ] as $section ) {
+				echo '<div class="tailsignal-settings-section">';
+				if ( $section['title'] ) {
+					echo '<h2>' . esc_html( $section['title'] ) . '</h2>';
+				}
+				if ( $section['callback'] ) {
+					call_user_func( $section['callback'], $section );
+				}
+				if ( isset( $wp_settings_fields[ $page ][ $section['id'] ] ) ) {
+					echo '<table class="form-table" role="presentation">';
+					do_settings_fields( $page, $section['id'] );
+					echo '</table>';
+				}
+				echo '</div>';
+			}
+		}
+		?>
 
 		<?php submit_button( __( 'Save Settings', 'tailsignal' ), 'tailsignal-btn-brand' ); ?>
 	</form>

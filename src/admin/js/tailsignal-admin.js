@@ -6,6 +6,50 @@
 (function($) {
 	'use strict';
 
+	// ── Helpers ─────────────────────────────────────────────────
+
+	/**
+	 * Show a WordPress-style admin notice inside #tailsignal-app.
+	 *
+	 * @param {string} message The message to display.
+	 * @param {string} type    Notice type: 'error', 'success', 'warning', 'info'.
+	 */
+	function tailsignalNotice(message, type) {
+		type = type || 'error';
+		var $existing = $('#tailsignal-app > .notice');
+		$existing.remove();
+		var $notice = $('<div class="notice notice-' + type + ' is-dismissible"><p></p></div>');
+		$notice.find('p').text(message);
+		var $dismiss = $('<button type="button" class="notice-dismiss"><span class="screen-reader-text">Dismiss</span></button>');
+		$notice.append($dismiss);
+		$('#tailsignal-app .tailsignal-page-header').after($notice);
+		$dismiss.on('click', function() { $notice.fadeOut(200, function() { $(this).remove(); }); });
+		setTimeout(function() { $notice.fadeOut(200, function() { $(this).remove(); }); }, 5000);
+	}
+
+	/**
+	 * Show a styled confirmation modal using existing .tailsignal-modal-* CSS.
+	 *
+	 * @param {string}   message   The confirmation message.
+	 * @param {Function} onConfirm Callback executed when user clicks Confirm.
+	 */
+	function tailsignalConfirm(message, onConfirm) {
+		var $overlay = $('<div class="tailsignal-modal-overlay" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;"></div>');
+		var $panel = $('<div class="tailsignal-modal-panel" style="max-width:400px;width:90%;"></div>');
+		$panel.append('<div class="tailsignal-modal-header"><h3>Confirm</h3></div>');
+		var $body = $('<div class="tailsignal-modal-body"></div>');
+		$body.append($('<p></p>').text(message));
+		var $actions = $('<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;"></div>');
+		$actions.append('<button type="button" class="button ts-confirm-cancel">Cancel</button>');
+		$actions.append('<button type="button" class="button button-primary ts-confirm-ok">Confirm</button>');
+		$body.append($actions);
+		$panel.append($body);
+		$overlay.append($panel);
+		$('body').append($overlay);
+		$overlay.on('click', '.ts-confirm-cancel', function() { $overlay.remove(); });
+		$overlay.on('click', '.ts-confirm-ok', function() { $overlay.remove(); onConfirm(); });
+	}
+
 	// ── Send Notification Page ──────────────────────────────────
 
 	// Target type radio toggle
@@ -83,21 +127,21 @@
 
 	// Cancel scheduled notification
 	$(document).on('click', '.tailsignal-cancel-scheduled', function() {
-		if (!confirm(tailsignal.strings.confirm_delete)) return;
-
 		var $btn = $(this);
 		var id = $btn.data('id');
 
-		$.post(tailsignal.ajax_url, {
-			action: 'tailsignal_cancel_scheduled',
-			nonce: tailsignal.nonce,
-			notification_id: id
-		}, function(response) {
-			if (response.success) {
-				$btn.closest('tr').fadeOut(function() { $(this).remove(); });
-			} else {
-				alert(response.data.message);
-			}
+		tailsignalConfirm(tailsignal.strings.confirm_delete, function() {
+			$.post(tailsignal.ajax_url, {
+				action: 'tailsignal_cancel_scheduled',
+				nonce: tailsignal.nonce,
+				notification_id: id
+			}, function(response) {
+				if (response.success) {
+					$btn.closest('tr').fadeOut(function() { $(this).remove(); });
+				} else {
+					tailsignalNotice(response.data.message, 'error');
+				}
+			});
 		});
 	});
 
@@ -212,48 +256,50 @@
 
 	// Delete All History
 	$(document).on('click', '#tailsignal-delete-all-history', function() {
-		if (!confirm(tailsignal.strings.confirm_delete_all)) return;
-
 		var $btn = $(this);
-		$btn.prop('disabled', true).text(tailsignal.strings.deleting);
 
-		$.post(tailsignal.ajax_url, {
-			action: 'tailsignal_delete_all_notifications',
-			nonce: tailsignal.nonce
-		}, function(response) {
-			if (response.success) {
-				location.reload();
-			} else {
-				alert(response.data.message);
+		tailsignalConfirm(tailsignal.strings.confirm_delete_all, function() {
+			$btn.prop('disabled', true).text(tailsignal.strings.deleting);
+
+			$.post(tailsignal.ajax_url, {
+				action: 'tailsignal_delete_all_notifications',
+				nonce: tailsignal.nonce
+			}, function(response) {
+				if (response.success) {
+					location.reload();
+				} else {
+					tailsignalNotice(response.data.message, 'error');
+					$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
+				}
+			}).fail(function() {
+				tailsignalNotice(tailsignal.strings.error, 'error');
 				$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
-			}
-		}).fail(function() {
-			alert(tailsignal.strings.error);
-			$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
+			});
 		});
 	});
 
 	// ── Dashboard Clear All Recent ────────────────────────────
 
 	$(document).on('click', '#tailsignal-clear-recent', function() {
-		if (!confirm(tailsignal.strings.confirm_delete_all)) return;
-
 		var $btn = $(this);
-		$btn.prop('disabled', true);
 
-		$.post(tailsignal.ajax_url, {
-			action: 'tailsignal_delete_all_notifications',
-			nonce: tailsignal.nonce
-		}, function(response) {
-			if (response.success) {
-				location.reload();
-			} else {
-				alert(response.data.message);
+		tailsignalConfirm(tailsignal.strings.confirm_delete_all, function() {
+			$btn.prop('disabled', true);
+
+			$.post(tailsignal.ajax_url, {
+				action: 'tailsignal_delete_all_notifications',
+				nonce: tailsignal.nonce
+			}, function(response) {
+				if (response.success) {
+					location.reload();
+				} else {
+					tailsignalNotice(response.data.message, 'error');
+					$btn.prop('disabled', false);
+				}
+			}).fail(function() {
+				tailsignalNotice(tailsignal.strings.error, 'error');
 				$btn.prop('disabled', false);
-			}
-		}).fail(function() {
-			alert(tailsignal.strings.error);
-			$btn.prop('disabled', false);
+			});
 		});
 	});
 
@@ -381,7 +427,7 @@
 			if (response.success) {
 				location.reload();
 			} else {
-				alert(response.data.message);
+				tailsignalNotice(response.data.message, 'error');
 			}
 		});
 	});
@@ -401,7 +447,7 @@
 			if (response.success) {
 				location.reload();
 			} else {
-				alert(response.data.message);
+				tailsignalNotice(response.data.message, 'error');
 			}
 		});
 	});
@@ -516,21 +562,21 @@
 
 	// Delete group
 	$(document).on('click', '.tailsignal-delete-group', function() {
-		if (!confirm(tailsignal.strings.confirm_delete)) return;
-
 		var $btn = $(this);
 		var id = $btn.data('id');
 
-		$.post(tailsignal.ajax_url, {
-			action: 'tailsignal_delete_group',
-			nonce: tailsignal.nonce,
-			group_id: id
-		}, function(response) {
-			if (response.success) {
-				$btn.closest('tr').fadeOut(function() { $(this).remove(); });
-			} else {
-				alert(response.data.message);
-			}
+		tailsignalConfirm(tailsignal.strings.confirm_delete, function() {
+			$.post(tailsignal.ajax_url, {
+				action: 'tailsignal_delete_group',
+				nonce: tailsignal.nonce,
+				group_id: id
+			}, function(response) {
+				if (response.success) {
+					$btn.closest('tr').fadeOut(function() { $(this).remove(); });
+				} else {
+					tailsignalNotice(response.data.message, 'error');
+				}
+			});
 		});
 	});
 

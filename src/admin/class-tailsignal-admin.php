@@ -128,6 +128,11 @@ class TailSignal_Admin {
 			return;
 		}
 
+		// Load WP Media Library on Send page and post editor (before our script).
+		if ( 'tailsignal_page_tailsignal-send' === $hook || $is_post_edit ) {
+			wp_enqueue_media();
+		}
+
 		wp_enqueue_script(
 			'tailsignal-admin',
 			TAILSIGNAL_PLUGIN_URL . 'admin/js/tailsignal-admin.js',
@@ -135,7 +140,6 @@ class TailSignal_Admin {
 			TAILSIGNAL_VERSION,
 			true
 		);
-		wp_script_add_data( 'tailsignal-admin', 'strategy', 'defer' );
 
 		wp_localize_script( 'tailsignal-admin', 'tailsignal', array(
 			'ajax_url'  => admin_url( 'admin-ajax.php' ),
@@ -156,11 +160,6 @@ class TailSignal_Admin {
 				'delete_all_history' => __( 'Delete All History', 'tailsignal' ),
 			),
 		) );
-
-		// Load WP Media Library on Send page and post editor.
-		if ( 'tailsignal_page_tailsignal-send' === $hook || $is_post_edit ) {
-			wp_enqueue_media();
-		}
 
 		// Load Chart.js on dashboard page only.
 		if ( 'toplevel_page_tailsignal' === $hook ) {

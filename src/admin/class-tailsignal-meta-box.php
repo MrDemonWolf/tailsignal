@@ -15,7 +15,7 @@ class TailSignal_Meta_Box {
 	 * Add the meta box to the post editor.
 	 */
 	public function add_meta_box() {
-		$post_types = apply_filters( 'tailsignal_post_types', array( 'post' ) );
+		$post_types = apply_filters( 'tailsignal_post_types', array( 'post', 'portfolio' ) );
 
 		foreach ( $post_types as $post_type ) {
 			add_meta_box(
@@ -140,8 +140,9 @@ class TailSignal_Meta_Box {
 			'title' => $title,
 			'body'  => $body,
 			'data'  => wp_json_encode( array(
-				'post_id' => $post->ID,
-				'url'     => get_permalink( $post ),
+				'post_id'   => $post->ID,
+				'post_type' => $post->post_type,
+				'url'       => get_permalink( $post ),
 			) ),
 		);
 

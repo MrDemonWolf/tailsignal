@@ -180,3 +180,14 @@ Used in notification title/body templates:
 - Additional DB methods: `get_monthly_notification_stats()`, `delete_all_notifications()`, `import_devices()`
 - History page has `handle_delete_all()` AJAX handler for bulk notification deletion
 - Send page has iOS/Android preview toggle
+
+## CRITICAL DOCUMENTATION PATTERN
+
+**ALWAYS ADD IMPORTANT DOCS HERE!** When you create or discover:
+
+- Architecture diagrams → Add reference path here
+- Database schemas → Add reference path here
+- Problem solutions → Add reference path here
+- Setup guides → Add reference path here
+
+This prevents context loss! Update this file IMMEDIATELY when creating important docs.
