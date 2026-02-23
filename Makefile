@@ -1,6 +1,6 @@
 .PHONY: zip test clean css
 
-COMPOSER := $(shell command -v composer 2>/dev/null || echo php src/composer.phar)
+COMPOSER := $(shell command -v composer 2>/dev/null || echo php composer.phar)
 
 css:
 	npm -w src run build:css
