@@ -157,7 +157,31 @@
 	$(document).on('click', '#tailsignal-fill-test', function() {
 		$('#tailsignal-title').val('Test Notification from TailSignal').trigger('input');
 		$('#tailsignal-body').val('This is a test push notification. If you received this, TailSignal is working correctly!').trigger('input');
+		$('#tailsignal-image-url').val('https://placehold.co/1200x630/0FACED/white?text=TailSignal+Test').trigger('input');
 		$('input[name="target_type"][value="dev"]').prop('checked', true).trigger('change');
+	});
+
+	// WordPress Media Library picker
+	$(document).on('click', '#tailsignal-choose-image', function(e) {
+		e.preventDefault();
+
+		if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+			return;
+		}
+
+		var frame = wp.media({
+			title: tailsignal.strings.choose_image || 'Choose Image',
+			button: { text: tailsignal.strings.use_image || 'Use this image' },
+			multiple: false,
+			library: { type: 'image' }
+		});
+
+		frame.on('select', function() {
+			var attachment = frame.state().get('selection').first().toJSON();
+			$('#tailsignal-image-url').val(attachment.url).trigger('input');
+		});
+
+		frame.open();
 	});
 
 	// ── History Page ───────────────────────────────────────────
@@ -182,6 +206,30 @@
 		}).fail(function() {
 			alert(tailsignal.strings.error);
 			$btn.prop('disabled', false).text(tailsignal.strings.delete_all_history);
+		});
+	});
+
+	// ── Dashboard Clear All Recent ────────────────────────────
+
+	$(document).on('click', '#tailsignal-clear-recent', function() {
+		if (!confirm(tailsignal.strings.confirm_delete_all)) return;
+
+		var $btn = $(this);
+		$btn.prop('disabled', true);
+
+		$.post(tailsignal.ajax_url, {
+			action: 'tailsignal_delete_all_notifications',
+			nonce: tailsignal.nonce
+		}, function(response) {
+			if (response.success) {
+				location.reload();
+			} else {
+				alert(response.data.message);
+				$btn.prop('disabled', false);
+			}
+		}).fail(function() {
+			alert(tailsignal.strings.error);
+			$btn.prop('disabled', false);
 		});
 	});
 
@@ -376,7 +424,17 @@
 		$('#tailsignal-group-name').val('');
 		$('#tailsignal-group-description').val('');
 		$('#tailsignal-group-form input[type="checkbox"]').prop('checked', false);
+		updateDeviceSelectedCount();
 	});
+
+	// Update the selected device count display
+	function updateDeviceSelectedCount() {
+		var $counter = $('#tailsignal-device-selected-count');
+		if ( ! $counter.length ) return;
+		var checked = $('#tailsignal-group-save-form input[name="device_ids[]"]:checked').length;
+		var total   = $('#tailsignal-group-save-form input[name="device_ids[]"]').length;
+		$counter.text( checked + ' / ' + total + ' selected' );
+	}
 
 	// Device search in groups
 	$('#tailsignal-group-device-search').on('input', function() {
@@ -385,6 +443,22 @@
 			var label = $(this).data('label') || '';
 			$(this).toggle(label.indexOf(query) !== -1);
 		});
+	});
+
+	// Select all / Deselect all
+	$('#tailsignal-select-all-devices').on('click', function() {
+		$('.tailsignal-device-option:visible input[type="checkbox"]').prop('checked', true);
+		updateDeviceSelectedCount();
+	});
+
+	$('#tailsignal-deselect-all-devices').on('click', function() {
+		$('.tailsignal-device-option:visible input[type="checkbox"]').prop('checked', false);
+		updateDeviceSelectedCount();
+	});
+
+	// Update count on any checkbox change
+	$(document).on('change', '#tailsignal-group-save-form input[name="device_ids[]"]', function() {
+		updateDeviceSelectedCount();
 	});
 
 	// Save group

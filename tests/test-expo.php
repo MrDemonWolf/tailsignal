@@ -54,15 +54,14 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 		) );
 
 		$array = $message->toArray();
-		$this->assertArrayHasKey( 'data', $array );
-		$this->assertArrayHasKey( 'richContent', $array['data'] );
-		$this->assertSame( 'https://example.com/image.jpg', $array['data']['richContent']['image'] );
+		$this->assertArrayHasKey( 'image', $array );
+		$this->assertSame( 'https://example.com/image.jpg', $array['image'] );
 	}
 
 	/**
-	 * Test build_message with image URL sets mutableContent for iOS.
+	 * Test build_message with image URL sets top-level image field.
 	 */
-	public function test_build_message_with_image_sets_mutable_content() {
+	public function test_build_message_with_image_sets_top_level_field() {
 		$message = TailSignal_Expo::build_message( array(
 			'title'     => 'Test',
 			'body'      => 'Body',
@@ -70,7 +69,8 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 		) );
 
 		$array = $message->toArray();
-		$this->assertTrue( $array['mutableContent'] );
+		$this->assertSame( 'https://example.com/image.jpg', $array['image'] );
+		$this->assertArrayNotHasKey( 'data', $array );
 	}
 
 	/**
@@ -131,7 +131,7 @@ class Test_TailSignal_Expo extends TailSignal_TestCase {
 
 		$array = $message->toArray();
 		$this->assertSame( 42, $array['data']['post_id'] );
-		$this->assertSame( 'https://example.com/img.jpg', $array['data']['richContent']['image'] );
+		$this->assertSame( 'https://example.com/img.jpg', $array['image'] );
 	}
 
 	/**

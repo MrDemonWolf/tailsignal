@@ -143,6 +143,8 @@ class TailSignal_Admin {
 			'nonce'     => wp_create_nonce( 'tailsignal_nonce' ),
 			'rest_nonce' => wp_create_nonce( 'wp_rest' ),
 			'strings'   => array(
+				'choose_image'    => __( 'Choose Image', 'tailsignal' ),
+				'use_image'       => __( 'Use this image', 'tailsignal' ),
 				'confirm_delete'  => __( 'Are you sure you want to delete this?', 'tailsignal' ),
 				'sending'         => __( 'Sending...', 'tailsignal' ),
 				'sent'            => __( 'Sent!', 'tailsignal' ),
@@ -154,6 +156,11 @@ class TailSignal_Admin {
 				'delete_all_history' => __( 'Delete All History', 'tailsignal' ),
 			),
 		) );
+
+		// Load WP Media Library on Send page.
+		if ( 'tailsignal_page_tailsignal-send' === $hook ) {
+			wp_enqueue_media();
+		}
 
 		// Load Chart.js on dashboard page only.
 		if ( 'toplevel_page_tailsignal' === $hook ) {

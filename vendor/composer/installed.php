@@ -3,7 +3,7 @@
         'name' => 'mrdemonwolf/tailsignal',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '1bd3101158d0f5de1d8bf80080faa49c1f1f0555',
+        'reference' => 'fa8559c2ecb3086678446752f2e0028191792847',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -112,7 +112,7 @@
         'mrdemonwolf/tailsignal' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '1bd3101158d0f5de1d8bf80080faa49c1f1f0555',
+            'reference' => 'fa8559c2ecb3086678446752f2e0028191792847',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

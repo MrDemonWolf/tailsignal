@@ -7,6 +7,27 @@ module.exports = {
 	important: '#tailsignal-app',
 	content: [
 		'admin/partials/**/*.php',
+		'admin/class-tailsignal-admin-devices.php',
+		'admin/class-tailsignal-admin-history.php',
 		'admin/js/**/*.js',
 	],
+	theme: {
+		extend: {
+			colors: {
+				brand: {
+					50:  '#edf9ff',
+					100: '#d6f1ff',
+					200: '#a3ddfb',
+					300: '#5cc8f5',
+					400: '#22b5ec',
+					500: '#0FACED',
+					600: '#0991d4',
+					700: '#0776a8',
+					800: '#064a6e',
+					900: '#091533',
+					950: '#060d20',
+				},
+			},
+		},
+	},
 };
