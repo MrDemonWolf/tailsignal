@@ -109,5 +109,22 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 	}
 }
 
+if ( ! class_exists( 'WP_List_Table' ) ) {
+	class WP_List_Table {
+		public $items = array();
+		public function __construct( $args = array() ) {}
+		public function set_pagination_args( $args ) {}
+		public function get_pagenum() { return 1; }
+		protected function row_actions( $actions, $always_visible = false ) { return ''; }
+	}
+}
+
+// Define is_wp_error if not already defined.
+if ( ! function_exists( 'is_wp_error' ) ) {
+	function is_wp_error( $thing ) {
+		return $thing instanceof WP_Error;
+	}
+}
+
 // Load base test class.
 require_once __DIR__ . '/TestCase.php';

@@ -126,7 +126,8 @@ class TailSignal_DB {
 			meta_value longtext,
 			PRIMARY KEY  (meta_id),
 			KEY device_id (device_id),
-			KEY meta_key (meta_key(191))
+			KEY meta_key (meta_key(191)),
+			KEY device_meta_key (device_id, meta_key(191))
 		) $charset_collate;";
 
 		// Groups table.
@@ -173,7 +174,8 @@ class TailSignal_DB {
 			PRIMARY KEY  (id),
 			KEY post_id (post_id),
 			KEY status (status),
-			KEY type (type)
+			KEY type (type),
+			KEY created_at (created_at)
 		) $charset_collate;";
 
 		// Notification history (post-notification link).
@@ -277,7 +279,12 @@ class TailSignal_DB {
 
 		$wpdb->insert( $table, $data, $format );
 
-		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
+		if ( $wpdb->insert_id ) {
+			self::invalidate_device_cache();
+			return (int) $wpdb->insert_id;
+		}
+
+		return false;
 	}
 
 	/**
@@ -291,7 +298,7 @@ class TailSignal_DB {
 
 		$table = $wpdb->prefix . 'tailsignal_devices';
 
-		return (bool) $wpdb->update(
+		$result = (bool) $wpdb->update(
 			$table,
 			array(
 				'is_active'  => 0,
@@ -301,6 +308,12 @@ class TailSignal_DB {
 			array( '%d', '%s' ),
 			array( '%s' )
 		);
+
+		if ( $result ) {
+			self::invalidate_device_cache();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -321,7 +334,13 @@ class TailSignal_DB {
 		$wpdb->delete( $prefix . 'device_groups', array( 'device_id' => $device_id ), array( '%d' ) );
 
 		// Delete device.
-		return (bool) $wpdb->delete( $prefix . 'devices', array( 'id' => $device_id ), array( '%d' ) );
+		$result = (bool) $wpdb->delete( $prefix . 'devices', array( 'id' => $device_id ), array( '%d' ) );
+
+		if ( $result ) {
+			self::invalidate_device_cache();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -536,6 +555,23 @@ class TailSignal_DB {
 	}
 
 	/**
+	 * Invalidate device-related transient caches.
+	 */
+	public static function invalidate_device_cache() {
+		delete_transient( 'tailsignal_device_summary_stats' );
+		delete_transient( 'tailsignal_device_count_platform' );
+	}
+
+	/**
+	 * Invalidate notification-related transient caches.
+	 */
+	public static function invalidate_notification_cache() {
+		delete_transient( 'tailsignal_notification_counts_status' );
+		delete_transient( 'tailsignal_success_rate' );
+		delete_transient( 'tailsignal_monthly_notification_stats' );
+	}
+
+	/**
 	 * Get device count.
 	 *
 	 * @param bool $active_only Whether to count only active devices.
@@ -559,6 +595,11 @@ class TailSignal_DB {
 	 * @return array Associative array of platform => count.
 	 */
 	public static function get_device_count_by_platform() {
+		$cached = get_transient( 'tailsignal_device_count_platform' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table   = $wpdb->prefix . 'tailsignal_devices';
@@ -570,6 +611,8 @@ class TailSignal_DB {
 		foreach ( $results as $row ) {
 			$counts[ $row->device_type ] = (int) $row->count;
 		}
+
+		set_transient( 'tailsignal_device_count_platform', $counts, 5 * MINUTE_IN_SECONDS );
 
 		return $counts;
 	}
@@ -598,6 +641,11 @@ class TailSignal_DB {
 	 * @return array Associative array with total, ios, android, dev keys.
 	 */
 	public static function get_device_summary_stats() {
+		$cached = get_transient( 'tailsignal_device_summary_stats' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'tailsignal_devices';
@@ -612,12 +660,16 @@ class TailSignal_DB {
 			WHERE is_active = 1"
 		);
 
-		return array(
+		$result = array(
 			'total'   => $row ? (int) $row->total : 0,
 			'ios'     => $row ? (int) $row->ios : 0,
 			'android' => $row ? (int) $row->android : 0,
 			'dev'     => $row ? (int) $row->dev : 0,
 		);
+
+		set_transient( 'tailsignal_device_summary_stats', $result, 5 * MINUTE_IN_SECONDS );
+
+		return $result;
 	}
 
 	/**
@@ -641,7 +693,13 @@ class TailSignal_DB {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}device_meta WHERE device_id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}device_groups WHERE device_id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		return (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}devices WHERE id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$count = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$prefix}devices WHERE id IN ({$placeholders})", $device_ids ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		if ( $count > 0 ) {
+			self::invalidate_device_cache();
+		}
+
+		return $count;
 	}
 
 	/**
@@ -662,12 +720,18 @@ class TailSignal_DB {
 		$placeholders = implode( ',', array_fill( 0, count( $tokens ), '%s' ) );
 
 		// Single UPDATE with WHERE IN instead of one query per token.
-		return (int) $wpdb->query(
+		$count = (int) $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table} SET is_active = 0, updated_at = %s WHERE expo_token IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				array_merge( array( $now ), $tokens )
 			)
 		);
+
+		if ( $count > 0 ) {
+			self::invalidate_device_cache();
+		}
+
+		return $count;
 	}
 
 	// ── Groups ──────────────────────────────────────────────────
@@ -981,7 +1045,12 @@ class TailSignal_DB {
 
 		$wpdb->insert( $table, $data, self::get_notification_format( $data ) );
 
-		return $wpdb->insert_id ? (int) $wpdb->insert_id : false;
+		if ( $wpdb->insert_id ) {
+			self::invalidate_notification_cache();
+			return (int) $wpdb->insert_id;
+		}
+
+		return false;
 	}
 
 	/**
@@ -997,13 +1066,19 @@ class TailSignal_DB {
 		$table             = $wpdb->prefix . 'tailsignal_notifications';
 		$data['updated_at'] = current_time( 'mysql' );
 
-		return (bool) $wpdb->update(
+		$result = (bool) $wpdb->update(
 			$table,
 			$data,
 			array( 'id' => $notification_id ),
 			self::get_notification_format( $data ),
 			array( '%d' )
 		);
+
+		if ( $result ) {
+			self::invalidate_notification_cache();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -1040,6 +1115,7 @@ class TailSignal_DB {
 			'status'   => '',
 			'orderby'  => 'created_at',
 			'order'    => 'DESC',
+			'columns'  => '*',
 		);
 
 		$args = wp_parse_args( $args, $defaults );
@@ -1074,7 +1150,8 @@ class TailSignal_DB {
 		}
 
 		// Get items.
-		$query        = "SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$select_cols  = '*' === $args['columns'] ? '*' : $args['columns'];
+		$query        = "SELECT {$select_cols} FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d"; // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$query_values = array_merge( $values, array( (int) $args['per_page'], $offset ) );
 		$items        = $wpdb->get_results( $wpdb->prepare( $query, $query_values ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
@@ -1139,6 +1216,11 @@ class TailSignal_DB {
 	 * @return array Associative array of status => count.
 	 */
 	public static function get_notification_counts_by_status() {
+		$cached = get_transient( 'tailsignal_notification_counts_status' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table   = $wpdb->prefix . 'tailsignal_notifications';
@@ -1150,6 +1232,8 @@ class TailSignal_DB {
 		foreach ( $results as $row ) {
 			$counts[ $row->status ] = (int) $row->count;
 		}
+
+		set_transient( 'tailsignal_notification_counts_status', $counts, 5 * MINUTE_IN_SECONDS );
 
 		return $counts;
 	}
@@ -1179,6 +1263,11 @@ class TailSignal_DB {
 	 * @return float Success rate percentage.
 	 */
 	public static function get_success_rate() {
+		$cached = get_transient( 'tailsignal_success_rate' );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'tailsignal_notifications';
@@ -1193,7 +1282,11 @@ class TailSignal_DB {
 			return 0.0;
 		}
 
-		return round( ( (float) $row->total_success / (float) $row->total_devices ) * 100, 1 );
+		$rate = round( ( (float) $row->total_success / (float) $row->total_devices ) * 100, 1 );
+
+		set_transient( 'tailsignal_success_rate', $rate, 5 * MINUTE_IN_SECONDS );
+
+		return $rate;
 	}
 
 	// ── Notification History ────────────────────────────────────
@@ -1257,10 +1350,21 @@ class TailSignal_DB {
 
 		$prefix = $wpdb->prefix . 'tailsignal_';
 
+		$wpdb->query( 'START TRANSACTION' );
+
 		$r1 = $wpdb->query( "TRUNCATE TABLE {$prefix}notification_history" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$r2 = $wpdb->query( "TRUNCATE TABLE {$prefix}notifications" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		return false !== $r1 && false !== $r2;
+		$success = false !== $r1 && false !== $r2;
+
+		if ( $success ) {
+			$wpdb->query( 'COMMIT' );
+			self::invalidate_notification_cache();
+		} else {
+			$wpdb->query( 'ROLLBACK' );
+		}
+
+		return $success;
 	}
 
 	/**
@@ -1270,11 +1374,17 @@ class TailSignal_DB {
 	 * @return array Array of objects with month, total, success, failed.
 	 */
 	public static function get_monthly_notification_stats( $months = 12 ) {
+		$cache_key = 'tailsignal_monthly_notification_stats';
+		$cached    = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
 		global $wpdb;
 
 		$table = $wpdb->prefix . 'tailsignal_notifications';
 
-		return $wpdb->get_results(
+		$results = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT DATE_FORMAT(created_at, '%%Y-%%m') as month,
 					COUNT(*) as total,
@@ -1288,6 +1398,10 @@ class TailSignal_DB {
 				$months
 			)
 		);
+
+		set_transient( $cache_key, $results, 5 * MINUTE_IN_SECONDS );
+
+		return $results;
 	}
 
 	// ── Export/Import ────────────────────────────────────────────
@@ -1318,12 +1432,17 @@ class TailSignal_DB {
 	 * @return array Import results with 'new', 'updated', 'skipped' counts.
 	 */
 	public static function import_devices( $rows ) {
+		global $wpdb;
+
 		$results = array(
 			'new'     => 0,
 			'updated' => 0,
 			'skipped' => 0,
 		);
 
+		$wpdb->query( 'START TRANSACTION' );
+
+		try {
 		foreach ( $rows as $row ) {
 			if ( empty( $row['expo_token'] ) ) {
 				$results['skipped']++;
@@ -1362,6 +1481,12 @@ class TailSignal_DB {
 			} else {
 				$results['skipped']++;
 			}
+		}
+
+		$wpdb->query( 'COMMIT' );
+		} catch ( \Exception $e ) {
+			$wpdb->query( 'ROLLBACK' );
+			throw $e;
 		}
 
 		return $results;

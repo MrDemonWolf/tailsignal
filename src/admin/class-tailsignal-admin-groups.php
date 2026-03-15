@@ -22,6 +22,9 @@ class TailSignal_Admin_Groups {
 		$editing_group    = null;
 		$editing_devices  = array();
 		if ( isset( $_GET['edit'] ) ) {
+			if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'tailsignal_edit_group' ) ) {
+				wp_die( esc_html__( 'Invalid nonce. Please try again.', 'tailsignal' ) );
+			}
 			$group_id      = intval( $_GET['edit'] );
 			$editing_group = TailSignal_DB::get_group( $group_id );
 			if ( $editing_group ) {

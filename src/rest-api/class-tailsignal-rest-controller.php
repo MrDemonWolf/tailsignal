@@ -260,12 +260,46 @@ class TailSignal_REST_Controller {
 	}
 
 	/**
+	 * Check rate limit for public endpoints.
+	 *
+	 * Uses transient-based rate limiting: 30 requests per minute per IP.
+	 *
+	 * @return true|WP_Error True if allowed, WP_Error if rate limited.
+	 */
+	private function check_rate_limit() {
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
+		$key = 'tailsignal_rate_' . md5( $ip );
+
+		$count = get_transient( $key );
+		if ( false === $count ) {
+			set_transient( $key, 1, MINUTE_IN_SECONDS );
+			return true;
+		}
+
+		if ( (int) $count >= 30 ) {
+			return new WP_Error(
+				'tailsignal_rate_limited',
+				__( 'Too many requests. Please try again later.', 'tailsignal' ),
+				array( 'status' => 429 )
+			);
+		}
+
+		set_transient( $key, (int) $count + 1, MINUTE_IN_SECONDS );
+		return true;
+	}
+
+	/**
 	 * Register a device.
 	 *
 	 * @param WP_REST_Request $request The request.
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function register_device( $request ) {
+		$rate_check = $this->check_rate_limit();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		$data = array(
 			'expo_token'   => $request->get_param( 'expo_token' ),
 			'device_type'  => $request->get_param( 'device_type' ),
@@ -309,6 +343,11 @@ class TailSignal_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function unregister_device( $request ) {
+		$rate_check = $this->check_rate_limit();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		$expo_token = $request->get_param( 'expo_token' );
 
 		$result = TailSignal_DB::remove_device( $expo_token );
@@ -337,6 +376,11 @@ class TailSignal_REST_Controller {
 	 * @return WP_REST_Response
 	 */
 	public function check_registration_status( $request ) {
+		$rate_check = $this->check_rate_limit();
+		if ( is_wp_error( $rate_check ) ) {
+			return $rate_check;
+		}
+
 		$expo_token = $request->get_param( 'expo_token' );
 		$device     = TailSignal_DB::get_device_by_token( $expo_token );
 
@@ -587,15 +631,23 @@ class TailSignal_REST_Controller {
 
 		$allowed_mimes = array( 'text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel' );
 		$finfo = finfo_open( FILEINFO_MIME_TYPE );
-		if ( $finfo ) {
-			$detected_mime = finfo_file( $finfo, $file_info['tmp_name'] );
-			if ( $detected_mime && ! in_array( $detected_mime, $allowed_mimes, true ) ) {
-				return new WP_Error(
-					'invalid_file',
-					__( 'Invalid file type.', 'tailsignal' ),
-					array( 'status' => 400 )
-				);
-			}
+		if ( ! $finfo ) {
+			return new WP_Error(
+				'tailsignal_mime_check_failed',
+				__( 'Unable to verify file type. MIME detection unavailable.', 'tailsignal' ),
+				array( 'status' => 500 )
+			);
+		}
+		$detected_mime = finfo_file( $finfo, $file_info['tmp_name'] );
+		if ( PHP_VERSION_ID < 80500 ) {
+			finfo_close( $finfo );
+		}
+		if ( $detected_mime && ! in_array( $detected_mime, $allowed_mimes, true ) ) {
+			return new WP_Error(
+				'invalid_file',
+				__( 'Invalid file type.', 'tailsignal' ),
+				array( 'status' => 400 )
+			);
 		}
 
 		$file = fopen( $file_info['tmp_name'], 'r' );

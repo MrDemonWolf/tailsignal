@@ -205,7 +205,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<button type="submit" id="tailsignal-send-btn" class="button tailsignal-btn-brand">
 						<?php esc_html_e( 'Signal the Pack', 'tailsignal' ); ?>
 					</button>
-					<span id="tailsignal-send-status" class="tw-text-sm"></span>
+					<span id="tailsignal-send-status" class="tw-text-sm" aria-live="polite"></span>
 				</div>
 			</form>
 		</div>
@@ -273,10 +273,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<table class="tw-w-full">
 				<thead>
 					<tr>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Title', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Target', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Scheduled For', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Actions', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Title', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Target', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Scheduled For', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Actions', 'tailsignal' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>

@@ -263,6 +263,47 @@ class Test_TailSignal_Scheduling extends TailSignal_TestCase {
 	}
 
 	/**
+	 * Test cron check_receipts batch mode exits cleanly with empty pending.
+	 */
+	public function test_cron_check_receipts_batch_empty() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		// No pending receipt notifications.
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+
+		$cron = new TailSignal_Cron();
+		$cron->check_receipts(); // No argument = batch all.
+
+		$this->assertTrue( true );
+	}
+
+	/**
+	 * Test cron check_receipts batch skips notifications with empty ticket_ids.
+	 */
+	public function test_cron_check_receipts_batch_skips_empty_tickets() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$notif = new stdClass();
+		$notif->id         = 10;
+		$notif->status     = 'sent';
+		$notif->ticket_ids = '[]'; // Empty array.
+
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array( $notif ) );
+
+		$cron = new TailSignal_Cron();
+		$cron->check_receipts();
+
+		// Should exit cleanly without calling Expo API.
+		$this->assertTrue( true );
+	}
+
+	/**
 	 * Test cron check_receipts handles null notification.
 	 */
 	public function test_cron_check_receipts_handles_null() {

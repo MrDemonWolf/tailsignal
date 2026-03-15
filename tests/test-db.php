@@ -815,6 +815,9 @@ class Test_TailSignal_DB extends TailSignal_TestCase {
 		$wpdb->prefix = 'wp_';
 		$wpdb->insert_id = 100;
 
+		// Transaction queries.
+		$wpdb->shouldReceive( 'query' )->andReturn( true );
+
 		// get_device_by_token returns null (new).
 		$wpdb->shouldReceive( 'get_row' )->once()->andReturn( null );
 		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
@@ -839,6 +842,14 @@ class Test_TailSignal_DB extends TailSignal_TestCase {
 	 * Test import_devices skips empty token.
 	 */
 	public function test_import_devices_skips_empty_token() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		// Transaction queries.
+		$wpdb->shouldReceive( 'query' )->andReturn( true );
+
 		$rows = array(
 			array( 'expo_token' => '', 'device_type' => 'ios' ),
 		);
@@ -857,6 +868,9 @@ class Test_TailSignal_DB extends TailSignal_TestCase {
 
 		$wpdb = Mockery::mock( 'wpdb' );
 		$wpdb->prefix = 'wp_';
+
+		// Transaction queries.
+		$wpdb->shouldReceive( 'query' )->andReturn( true );
 
 		$existing = new stdClass();
 		$existing->id = 50;
@@ -899,6 +913,100 @@ class Test_TailSignal_DB extends TailSignal_TestCase {
 		) );
 
 		$this->assertSame( 2, $count );
+	}
+
+	/**
+	 * Test get_device_summary_stats uses transient cache.
+	 */
+	public function test_get_device_summary_stats_cached() {
+		global $wpdb;
+
+		// Need a wpdb mock even though cache hits — the method signature uses global.
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$cached = array( 'total' => 10, 'ios' => 5, 'android' => 5, 'dev' => 2 );
+
+		Functions\when( 'get_transient' )->alias( function( $key ) use ( $cached ) {
+			if ( 'tailsignal_device_summary_stats' === $key ) {
+				return $cached;
+			}
+			return false;
+		} );
+
+		$result = TailSignal_DB::get_device_summary_stats();
+		$this->assertSame( 10, $result['total'] );
+		$this->assertSame( 5, $result['ios'] );
+	}
+
+	/**
+	 * Test get_device_summary_stats queries DB on cache miss.
+	 */
+	public function test_get_device_summary_stats_uncached() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$row = new stdClass();
+		$row->total   = 20;
+		$row->ios     = 12;
+		$row->android = 8;
+		$row->dev     = 3;
+
+		$wpdb->shouldReceive( 'get_row' )->once()->andReturn( $row );
+
+		// Default stubs handle get_transient (returns false) and set_transient (returns true).
+		$result = TailSignal_DB::get_device_summary_stats();
+		$this->assertSame( 20, $result['total'] );
+	}
+
+	/**
+	 * Test invalidate_device_cache deletes transients.
+	 */
+	public function test_invalidate_device_cache() {
+		// Default stubs handle delete_transient. Just verify no errors.
+		TailSignal_DB::invalidate_device_cache();
+		$this->assertTrue( true );
+	}
+
+	/**
+	 * Test invalidate_notification_cache deletes transients.
+	 */
+	public function test_invalidate_notification_cache() {
+		// Default stubs handle delete_transient. Just verify no errors.
+		TailSignal_DB::invalidate_notification_cache();
+		$this->assertTrue( true );
+	}
+
+	/**
+	 * Test import_devices uses transaction.
+	 */
+	public function test_import_devices_uses_transaction() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+		$wpdb->insert_id = 100;
+
+		// Transaction + cache invalidation queries.
+		$wpdb->shouldReceive( 'query' )->andReturn( true );
+
+		// get_device_by_token returns null (new).
+		$wpdb->shouldReceive( 'get_row' )->andReturn( null );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( null );
+		$wpdb->shouldReceive( 'insert' )->andReturn( 1 );
+
+		$rows = array(
+			array(
+				'expo_token'  => 'ExponentPushToken[txn_test]',
+				'device_type' => 'ios',
+			),
+		);
+
+		$result = TailSignal_DB::import_devices( $rows );
+		$this->assertSame( 1, $result['new'] );
 	}
 
 	/**

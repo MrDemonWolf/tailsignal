@@ -22,10 +22,76 @@ class TailSignal_Cron {
 			return;
 		}
 
-		// Check all pending receipts.
+		// Check all pending receipts in a single batch API call.
 		$notifications = TailSignal_DB::get_pending_receipt_notifications();
+		if ( empty( $notifications ) ) {
+			return;
+		}
+
+		// Collect all ticket IDs across notifications for one batch call.
+		$all_ticket_ids = array();
+		$ticket_map     = array(); // ticket_id => notification_id.
+
 		foreach ( $notifications as $notification ) {
-			$this->check_single_receipt( $notification->id );
+			$ticket_ids = json_decode( $notification->ticket_ids, true );
+			if ( empty( $ticket_ids ) ) {
+				continue;
+			}
+			foreach ( $ticket_ids as $ticket_id ) {
+				$all_ticket_ids[]          = $ticket_id;
+				$ticket_map[ $ticket_id ] = $notification->id;
+			}
+		}
+
+		if ( empty( $all_ticket_ids ) ) {
+			return;
+		}
+
+		// Single batch API call for all receipts.
+		$receipts = TailSignal_Expo::check_receipts( $all_ticket_ids );
+
+		// Group results by notification.
+		$notification_results = array();
+		$stale_tokens         = array();
+
+		foreach ( $receipts as $receipt_id => $receipt ) {
+			$notif_id = isset( $ticket_map[ $receipt_id ] ) ? $ticket_map[ $receipt_id ] : null;
+			if ( ! $notif_id ) {
+				continue;
+			}
+			if ( ! isset( $notification_results[ $notif_id ] ) ) {
+				$notification_results[ $notif_id ] = array(
+					'success' => 0,
+					'failed'  => 0,
+					'data'    => array(),
+				);
+			}
+
+			$notification_results[ $notif_id ]['data'][ $receipt_id ] = $receipt;
+
+			if ( isset( $receipt['status'] ) && 'ok' === $receipt['status'] ) {
+				$notification_results[ $notif_id ]['success']++;
+			} else {
+				$notification_results[ $notif_id ]['failed']++;
+				if ( isset( $receipt['details']['error'] ) && 'DeviceNotRegistered' === $receipt['details']['error'] ) {
+					$stale_tokens[] = $receipt_id;
+				}
+			}
+		}
+
+		// Deactivate stale tokens in bulk.
+		if ( ! empty( $stale_tokens ) ) {
+			TailSignal_DB::deactivate_tokens( $stale_tokens );
+		}
+
+		// Update each notification with its results.
+		foreach ( $notification_results as $notif_id => $result ) {
+			TailSignal_DB::update_notification( $notif_id, array(
+				'total_success' => $result['success'],
+				'total_failed'  => $result['failed'],
+				'status'        => 'receipts_checked',
+				'receipt_data'  => wp_json_encode( $result['data'] ),
+			) );
 		}
 	}
 

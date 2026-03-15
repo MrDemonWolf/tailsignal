@@ -30,10 +30,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<table class="tw-w-full">
 				<thead>
 					<tr>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Name', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Description', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Actions', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Name', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Description', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Actions', 'tailsignal' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -46,7 +46,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<td class="tw-px-5 tw-py-3.5 tw-text-sm tw-text-gray-500"><?php echo esc_html( $group->description ); ?></td>
 							<td class="tw-px-5 tw-py-3.5">
 								<div class="tw-flex tw-gap-2">
-									<a href="<?php echo esc_url( admin_url( 'admin.php?page=tailsignal-groups&edit=' . $group->id ) ); ?>" class="button button-small">
+									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=tailsignal-groups&edit=' . $group->id ), 'tailsignal_edit_group' ) ); ?>" class="button button-small">
 										<?php esc_html_e( 'Edit', 'tailsignal' ); ?>
 									</a>
 									<button type="button" class="button button-small tailsignal-btn-danger tailsignal-delete-group" data-id="<?php echo esc_attr( $group->id ); ?>">
@@ -69,7 +69,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php endif; ?>
 
 	<!-- Create/Edit Group Form -->
-	<div id="tailsignal-group-form" class="tailsignal-card" <?php echo ( ! $editing_group && ! isset( $_GET['new'] ) ) ? 'style="display:none;"' : ''; ?>>
+	<div id="tailsignal-group-form" class="tailsignal-card" <?php echo ( ! $editing_group && ! isset( $_GET['new'] ) ) ? 'style="display:none;"' : ''; /* No user input rendered here */ ?>>
 		<div class="tailsignal-card-body">
 			<h2 class="tw-text-base tw-font-bold tw-mb-4 tw-m-0">
 				<?php echo $editing_group ? esc_html__( 'Edit Group', 'tailsignal' ) : esc_html__( 'Create Group', 'tailsignal' ); ?>
@@ -160,7 +160,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<div class="tw-flex tw-items-center tw-gap-3">
 						<button type="submit" class="button tailsignal-btn-brand"><?php esc_html_e( 'Save Group', 'tailsignal' ); ?></button>
 						<a href="<?php echo esc_url( admin_url( 'admin.php?page=tailsignal-groups' ) ); ?>" class="button"><?php esc_html_e( 'Cancel', 'tailsignal' ); ?></a>
-						<span id="tailsignal-group-status" class="tw-text-sm"></span>
+						<span id="tailsignal-group-status" class="tw-text-sm" aria-live="polite"></span>
 					</div>
 				</div>
 			</form>

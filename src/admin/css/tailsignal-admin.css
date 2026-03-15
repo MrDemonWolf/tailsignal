@@ -884,9 +884,407 @@
 	color: var(--ts-text-secondary);
 }
 
+/* ── Status Classes (replaces inline JS color manipulation) ── */
+.tailsignal-status-success {
+	color: var(--ts-success);
+}
+
+.tailsignal-status-error {
+	color: var(--ts-danger);
+}
+
 /* ── Misc Utility ───────────────────────────────────── */
 .tailsignal-divider {
 	border: 0;
 	border-top: 1px solid var(--ts-border);
 	margin: 16px 0;
+}
+
+/* ── Dark Mode: OS preference ──────────────────────── */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--ts-brand-light: #0c2a3d;
+		--ts-brand-border: #0d6ea1;
+		--ts-brand-text: #7ecfef;
+		--ts-card-bg: #1e293b;
+		--ts-card-border: #334155;
+		--ts-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+		--ts-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3);
+		--ts-bg: #0f172a;
+		--ts-text: #e2e8f0;
+		--ts-text-secondary: #94a3b8;
+		--ts-text-muted: #64748b;
+		--ts-border: #334155;
+		--ts-success: #4ade80;
+		--ts-success-bg: #052e16;
+		--ts-danger: #f87171;
+		--ts-danger-bg: #450a0a;
+		--ts-warning: #fbbf24;
+		--ts-warning-bg: #451a03;
+		--ts-info: #38bdf8;
+		--ts-info-bg: #0c2a3d;
+	}
+
+	#tailsignal-app.wrap {
+		color: var(--ts-text);
+	}
+
+	/* Table overrides */
+	#tailsignal-app table thead tr,
+	.tailsignal-table-wrap .wp-list-table thead th,
+	.tailsignal-table-wrap .wp-list-table thead td,
+	.tailsignal-table-wrap .wp-list-table tfoot th,
+	.tailsignal-table-wrap .wp-list-table tfoot td,
+	.tailsignal-table-wrap .tablenav,
+	.tailsignal-table-wrap .search-box {
+		background: #1a2332;
+	}
+
+	#tailsignal-app table tbody tr:hover {
+		background-color: #1a2332;
+	}
+
+	/* Modal overlay */
+	.tailsignal-modal-overlay {
+		background: rgba(0, 0, 0, 0.7);
+	}
+
+	.tailsignal-modal-header {
+		background: #1a2332;
+	}
+
+	/* Badge dark overrides */
+	.tailsignal-badge-gray {
+		background-color: #334155;
+		color: #cbd5e1;
+	}
+
+	.tailsignal-badge-gray-muted {
+		background-color: #334155;
+		color: var(--ts-text-muted);
+	}
+
+	.tailsignal-badge-purple {
+		background-color: #2e1065;
+		color: #c4b5fd;
+	}
+
+	/* Code block */
+	.tailsignal-code {
+		background: #1e293b;
+		border-color: var(--ts-border);
+		color: var(--ts-text-secondary);
+	}
+
+	/* Stat icon dark backgrounds */
+	.tailsignal-stat-icon--brand { background: #0c2a3d; }
+	.tailsignal-stat-icon--blue { background: #0c2a3d; }
+	.tailsignal-stat-icon--green { background: #052e16; }
+	.tailsignal-stat-icon--purple { background: #2e1065; }
+	.tailsignal-stat-icon--yellow { background: #451a03; }
+	.tailsignal-stat-icon--gray { background: #1e293b; }
+
+	/* Form inputs */
+	#tailsignal-app input[type="text"],
+	#tailsignal-app input[type="url"],
+	#tailsignal-app input[type="password"],
+	#tailsignal-app input[type="datetime-local"],
+	#tailsignal-app textarea,
+	#tailsignal-app select {
+		background-color: #0f172a;
+		color: var(--ts-text);
+		border-color: var(--ts-border);
+	}
+
+	/* Settings code */
+	#tailsignal-app .form-table td code {
+		background: #1e293b;
+		color: var(--ts-brand-text);
+		border-color: var(--ts-border);
+	}
+
+	/* Placeholder buttons */
+	.tailsignal-placeholder-btn {
+		background: #1e293b;
+		color: var(--ts-text-secondary);
+		border-color: var(--ts-border);
+	}
+
+	/* Preview cards */
+	.tailsignal-preview-card {
+		background: linear-gradient(135deg, #1e293b 0%, #1a2332 100%);
+	}
+
+	.tailsignal-preview-card-android {
+		background: #1e293b;
+	}
+
+	.tailsignal-preview-image,
+	.tailsignal-preview-android-image {
+		background-color: #334155;
+	}
+
+	/* Test banner */
+	.tailsignal-test-banner {
+		background: #1e293b;
+		border-color: var(--ts-border);
+	}
+
+	.tailsignal-test-banner p {
+		color: var(--ts-text-secondary);
+	}
+
+	/* Dev mode banner */
+	.tailsignal-dev-banner {
+		border-color: #92400e;
+	}
+
+	.tailsignal-dev-pill {
+		border-color: #92400e;
+	}
+
+	/* Toggle slider */
+	.tailsignal-toggle-slider {
+		background-color: #475569;
+	}
+
+	/* Empty state */
+	.tailsignal-empty-state {
+		color: var(--ts-text-muted);
+	}
+
+	/* Danger button */
+	.tailsignal-btn-danger {
+		border-color: #991b1b !important;
+	}
+
+	.tailsignal-btn-danger:hover {
+		background: #450a0a !important;
+		border-color: #b91c1c !important;
+		color: #fca5a5 !important;
+	}
+
+	/* Tailwind dark overrides inside #tailsignal-app */
+	#tailsignal-app .tw-text-gray-900,
+	#tailsignal-app .tw-text-gray-800 {
+		color: var(--ts-text) !important;
+	}
+
+	#tailsignal-app .tw-text-gray-700 {
+		color: var(--ts-text-secondary) !important;
+	}
+
+	#tailsignal-app .tw-text-gray-500,
+	#tailsignal-app .tw-text-gray-400 {
+		color: var(--ts-text-muted) !important;
+	}
+
+	#tailsignal-app .tw-border-gray-300,
+	#tailsignal-app .tw-border-gray-200,
+	#tailsignal-app .tw-border-gray-100 {
+		border-color: var(--ts-border) !important;
+	}
+
+	#tailsignal-app .tw-bg-white {
+		background-color: var(--ts-card-bg) !important;
+	}
+
+	#tailsignal-app .tw-bg-gray-50,
+	#tailsignal-app .hover\:tw-bg-gray-50:hover {
+		background-color: #1a2332 !important;
+	}
+
+	/* WP List Table inside tailsignal */
+	#tailsignal-app .wp-list-table,
+	#tailsignal-app .wp-list-table td,
+	#tailsignal-app .wp-list-table th {
+		color: var(--ts-text);
+	}
+
+	#tailsignal-app .wp-list-table tbody tr:hover td {
+		background-color: #1a2332;
+	}
+
+	#tailsignal-app .wp-list-table .row-actions a {
+		color: var(--ts-brand);
+	}
+
+	/* WP notices in dark mode */
+	#tailsignal-app .notice {
+		background: var(--ts-card-bg);
+		color: var(--ts-text);
+		border-color: var(--ts-border);
+	}
+}
+
+/* ── Dark Mode: WP admin color scheme forced ───────── */
+#tailsignal-app[data-theme="dark"] {
+	--ts-brand-light: #0c2a3d;
+	--ts-brand-border: #0d6ea1;
+	--ts-brand-text: #7ecfef;
+	--ts-card-bg: #1e293b;
+	--ts-card-border: #334155;
+	--ts-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+	--ts-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3);
+	--ts-bg: #0f172a;
+	--ts-text: #e2e8f0;
+	--ts-text-secondary: #94a3b8;
+	--ts-text-muted: #64748b;
+	--ts-border: #334155;
+	--ts-success: #4ade80;
+	--ts-success-bg: #052e16;
+	--ts-danger: #f87171;
+	--ts-danger-bg: #450a0a;
+	--ts-warning: #fbbf24;
+	--ts-warning-bg: #451a03;
+	--ts-info: #38bdf8;
+	--ts-info-bg: #0c2a3d;
+	color: var(--ts-text);
+}
+
+#tailsignal-app[data-theme="dark"] table thead tr,
+#tailsignal-app[data-theme="dark"] .tailsignal-table-wrap .wp-list-table thead th,
+#tailsignal-app[data-theme="dark"] .tailsignal-table-wrap .wp-list-table thead td,
+#tailsignal-app[data-theme="dark"] .tailsignal-table-wrap .wp-list-table tfoot th,
+#tailsignal-app[data-theme="dark"] .tailsignal-table-wrap .wp-list-table tfoot td,
+#tailsignal-app[data-theme="dark"] .tailsignal-table-wrap .tablenav,
+#tailsignal-app[data-theme="dark"] .tailsignal-table-wrap .search-box,
+#tailsignal-app[data-theme="dark"] .tailsignal-modal-header {
+	background: #1a2332;
+}
+
+#tailsignal-app[data-theme="dark"] table tbody tr:hover {
+	background-color: #1a2332;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-modal-overlay {
+	background: rgba(0, 0, 0, 0.7);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-badge-gray {
+	background-color: #334155;
+	color: #cbd5e1;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-badge-gray-muted {
+	background-color: #334155;
+	color: var(--ts-text-muted);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-badge-purple {
+	background-color: #2e1065;
+	color: #c4b5fd;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-code {
+	background: #1e293b;
+	border-color: var(--ts-border);
+	color: var(--ts-text-secondary);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-stat-icon--brand { background: #0c2a3d; }
+#tailsignal-app[data-theme="dark"] .tailsignal-stat-icon--blue { background: #0c2a3d; }
+#tailsignal-app[data-theme="dark"] .tailsignal-stat-icon--green { background: #052e16; }
+#tailsignal-app[data-theme="dark"] .tailsignal-stat-icon--purple { background: #2e1065; }
+#tailsignal-app[data-theme="dark"] .tailsignal-stat-icon--yellow { background: #451a03; }
+#tailsignal-app[data-theme="dark"] .tailsignal-stat-icon--gray { background: #1e293b; }
+
+#tailsignal-app[data-theme="dark"] input[type="text"],
+#tailsignal-app[data-theme="dark"] input[type="url"],
+#tailsignal-app[data-theme="dark"] input[type="password"],
+#tailsignal-app[data-theme="dark"] input[type="datetime-local"],
+#tailsignal-app[data-theme="dark"] textarea,
+#tailsignal-app[data-theme="dark"] select {
+	background-color: #0f172a;
+	color: var(--ts-text);
+	border-color: var(--ts-border);
+}
+
+#tailsignal-app[data-theme="dark"] .form-table td code {
+	background: #1e293b;
+	color: var(--ts-brand-text);
+	border-color: var(--ts-border);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-placeholder-btn {
+	background: #1e293b;
+	color: var(--ts-text-secondary);
+	border-color: var(--ts-border);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-preview-card {
+	background: linear-gradient(135deg, #1e293b 0%, #1a2332 100%);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-preview-card-android {
+	background: #1e293b;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-preview-image,
+#tailsignal-app[data-theme="dark"] .tailsignal-preview-android-image {
+	background-color: #334155;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-test-banner {
+	background: #1e293b;
+	border-color: var(--ts-border);
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-toggle-slider {
+	background-color: #475569;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-btn-danger {
+	border-color: #991b1b !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tailsignal-btn-danger:hover {
+	background: #450a0a !important;
+	border-color: #b91c1c !important;
+	color: #fca5a5 !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tw-text-gray-900,
+#tailsignal-app[data-theme="dark"] .tw-text-gray-800 {
+	color: var(--ts-text) !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tw-text-gray-700 {
+	color: var(--ts-text-secondary) !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tw-text-gray-500,
+#tailsignal-app[data-theme="dark"] .tw-text-gray-400 {
+	color: var(--ts-text-muted) !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tw-border-gray-300,
+#tailsignal-app[data-theme="dark"] .tw-border-gray-200,
+#tailsignal-app[data-theme="dark"] .tw-border-gray-100 {
+	border-color: var(--ts-border) !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tw-bg-white {
+	background-color: var(--ts-card-bg) !important;
+}
+
+#tailsignal-app[data-theme="dark"] .tw-bg-gray-50,
+#tailsignal-app[data-theme="dark"] .hover\:tw-bg-gray-50:hover {
+	background-color: #1a2332 !important;
+}
+
+#tailsignal-app[data-theme="dark"] .wp-list-table,
+#tailsignal-app[data-theme="dark"] .wp-list-table td,
+#tailsignal-app[data-theme="dark"] .wp-list-table th {
+	color: var(--ts-text);
+}
+
+#tailsignal-app[data-theme="dark"] .wp-list-table tbody tr:hover td {
+	background-color: #1a2332;
+}
+
+#tailsignal-app[data-theme="dark"] .notice {
+	background: var(--ts-card-bg);
+	color: var(--ts-text);
+	border-color: var(--ts-border);
 }

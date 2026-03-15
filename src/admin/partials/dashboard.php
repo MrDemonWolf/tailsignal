@@ -82,7 +82,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 		<div class="tailsignal-card-body" style="<?php echo empty( $chart_stats ) ? 'padding: 24px 20px;' : ''; ?>">
 			<?php if ( ! empty( $chart_stats ) ) : ?>
-				<canvas id="tailsignal-chart" height="280" style="max-height: 280px;"></canvas>
+				<canvas id="tailsignal-chart" height="280" style="max-height: 280px;" aria-label="<?php esc_attr_e( 'Monthly notification trends chart', 'tailsignal' ); ?>" role="img"></canvas>
 			<?php else : ?>
 				<div style="text-align: center; color: var(--ts-text-muted);">
 					<span style="font-size: 24px; opacity: 0.4;">&#x1F4CA;</span>
@@ -106,11 +106,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<table class="tw-w-full">
 				<thead>
 					<tr>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Title', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Type', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Status', 'tailsignal' ); ?></th>
-						<th class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Date', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Title', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Type', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Devices', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Status', 'tailsignal' ); ?></th>
+						<th scope="col" class="tw-px-5 tw-py-3 tw-text-left tw-text-xs tw-font-semibold tw-text-gray-400 tw-uppercase tw-tracking-wider"><?php esc_html_e( 'Date', 'tailsignal' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>

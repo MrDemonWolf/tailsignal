@@ -80,6 +80,11 @@ class TailSignal_Meta_Box {
 			return;
 		}
 
+		// Require TailSignal capability for notification meta fields.
+		if ( ! current_user_can( 'tailsignal_manage' ) ) {
+			return;
+		}
+
 		// Save notify toggle.
 		$notify = isset( $_POST['tailsignal_notify'] ) ? '1' : '0';
 		update_post_meta( $post_id, '_tailsignal_notify', $notify );

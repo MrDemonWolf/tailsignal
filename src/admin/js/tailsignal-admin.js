@@ -34,7 +34,7 @@
 	 * @param {Function} onConfirm Callback executed when user clicks Confirm.
 	 */
 	function tailsignalConfirm(message, onConfirm) {
-		var $overlay = $('<div class="tailsignal-modal-overlay" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;"></div>');
+		var $overlay = $('<div class="tailsignal-modal-overlay" style="position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;" role="dialog" aria-modal="true" aria-label="Confirmation dialog"></div>');
 		var $panel = $('<div class="tailsignal-modal-panel" style="max-width:400px;width:90%;"></div>');
 		$panel.append('<div class="tailsignal-modal-header"><h3>Confirm</h3></div>');
 		var $body = $('<div class="tailsignal-modal-body"></div>');
@@ -77,7 +77,7 @@
 		var $status = $('#tailsignal-send-status');
 
 		$btn.prop('disabled', true).text(tailsignal.strings.sending);
-		$status.text('').removeClass('tw-text-green-600 tw-text-red-600');
+		$status.text('').removeClass('tailsignal-status-success tailsignal-status-error');
 
 		var data = {
 			action: 'tailsignal_send_notification',
@@ -107,7 +107,7 @@
 
 		$.post(tailsignal.ajax_url, data, function(response) {
 			if (response.success) {
-				$status.text(response.data.message).addClass('tw-text-green-600');
+				$status.text(response.data.message).addClass('tailsignal-status-success');
 				if (sendWhen !== 'schedule') {
 					$btn.text(tailsignal.strings.sent);
 				} else {
@@ -115,12 +115,12 @@
 					setTimeout(function() { location.reload(); }, 1500);
 				}
 			} else {
-				$status.text(response.data.message).addClass('tw-text-red-600');
+				$status.text(response.data.message).addClass('tailsignal-status-error');
 				$btn.text('Signal the Pack');
 			}
 			$btn.prop('disabled', false);
 		}).fail(function() {
-			$status.text(tailsignal.strings.error).addClass('tw-text-red-600');
+			$status.text(tailsignal.strings.error).addClass('tailsignal-status-error');
 			$btn.prop('disabled', false).text('Signal the Pack');
 		});
 	});
@@ -475,12 +475,12 @@
 			contentType: false,
 			headers: { 'X-WP-Nonce': tailsignal.rest_nonce },
 			success: function(response) {
-				$status.text(response.message).css('color', 'green');
+				$status.text(response.message).removeClass('tailsignal-status-error').addClass('tailsignal-status-success');
 				setTimeout(function() { location.reload(); }, 2000);
 			},
 			error: function(xhr) {
 				var msg = xhr.responseJSON ? xhr.responseJSON.message : tailsignal.strings.error;
-				$status.text(msg).css('color', 'red');
+				$status.text(msg).removeClass('tailsignal-status-success').addClass('tailsignal-status-error');
 			}
 		});
 	});
@@ -550,12 +550,12 @@
 			device_ids: deviceIds
 		}, function(response) {
 			if (response.success) {
-				$status.text(response.data.message).css('color', 'green');
+				$status.text(response.data.message).removeClass('tailsignal-status-error').addClass('tailsignal-status-success');
 				setTimeout(function() {
 					window.location.href = tailsignal.ajax_url.replace('admin-ajax.php', 'admin.php?page=tailsignal-groups');
 				}, 1000);
 			} else {
-				$status.text(response.data.message).css('color', 'red');
+				$status.text(response.data.message).removeClass('tailsignal-status-success').addClass('tailsignal-status-error');
 			}
 		});
 	});
@@ -609,13 +609,13 @@
 			include_image: $metaBox.find('[name="tailsignal_include_image"]:checked').length ? '1' : '0'
 		}, function(response) {
 			if (response.success) {
-				$status.text(response.data.message).css('color', 'green');
+				$status.text(response.data.message).removeClass('tailsignal-status-error').addClass('tailsignal-status-success');
 			} else {
-				$status.text(response.data.message).css('color', 'red');
+				$status.text(response.data.message).removeClass('tailsignal-status-success').addClass('tailsignal-status-error');
 			}
 			$btn.prop('disabled', false).text('Send Now');
 		}).fail(function() {
-			$status.text(tailsignal.strings.error).css('color', 'red');
+			$status.text(tailsignal.strings.error).removeClass('tailsignal-status-success').addClass('tailsignal-status-error');
 			$btn.prop('disabled', false).text('Send Now');
 		});
 	});

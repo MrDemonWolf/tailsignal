@@ -124,6 +124,17 @@ class TailSignal_Admin {
 		$is_tailsignal = $this->is_tailsignal_page( $hook );
 		$is_post_edit  = in_array( $hook, array( 'post.php', 'post-new.php' ), true );
 
+		// On post edit screens, only enqueue if post type is in tailsignal_post_types.
+		if ( $is_post_edit ) {
+			$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+			if ( $screen ) {
+				$supported_types = apply_filters( 'tailsignal_post_types', array( 'post', 'portfolio' ) );
+				if ( ! in_array( $screen->post_type, $supported_types, true ) ) {
+					$is_post_edit = false;
+				}
+			}
+		}
+
 		if ( ! $is_tailsignal && ! $is_post_edit ) {
 			return;
 		}
@@ -172,6 +183,43 @@ class TailSignal_Admin {
 			);
 			wp_script_add_data( 'chartjs', 'strategy', 'defer' );
 		}
+	}
+
+	/**
+	 * Check if the current WP admin color scheme is a dark variant.
+	 *
+	 * @return bool True if the admin is using a dark color scheme.
+	 */
+	public function is_dark_admin_scheme() {
+		$dark_schemes = array( 'midnight', 'blue', 'coffee', 'ectoplasm', 'ocean', 'sunrise', 'modern' );
+		$scheme       = get_user_option( 'admin_color' );
+
+		return in_array( $scheme, $dark_schemes, true );
+	}
+
+	/**
+	 * Add data-theme attribute to #tailsignal-app wrappers for dark WP admin schemes.
+	 *
+	 * Hooked to admin_footer to inject a small inline script.
+	 */
+	public function maybe_add_dark_theme_attr() {
+		$hook = get_current_screen();
+		if ( ! $hook ) {
+			return;
+		}
+
+		$is_tailsignal = $this->is_tailsignal_page( $hook->id );
+		$is_post_edit  = in_array( $hook->id, array( 'post', 'page' ), true ) || 'add' === $hook->action;
+
+		if ( ! $is_tailsignal && ! $is_post_edit ) {
+			return;
+		}
+
+		if ( ! $this->is_dark_admin_scheme() ) {
+			return;
+		}
+
+		echo '<script>document.querySelectorAll("#tailsignal-app").forEach(function(el){el.setAttribute("data-theme","dark")});</script>' . "\n";
 	}
 
 	/**

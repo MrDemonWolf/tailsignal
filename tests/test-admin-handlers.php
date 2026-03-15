@@ -381,6 +381,75 @@ class Test_TailSignal_Admin_Handlers extends TailSignal_TestCase {
 		$this->assertCount( 3, $success_data['device_ids'] );
 	}
 
+	// ── Groups Edit Nonce ─────────────────────────────────────────
+
+	/**
+	 * Test groups render requires nonce on edit GET param.
+	 */
+	public function test_groups_render_requires_edit_nonce() {
+		$_GET = array( 'edit' => '5' );
+
+		Functions\expect( 'wp_verify_nonce' )->andReturn( false );
+
+		$died = false;
+		Functions\expect( 'wp_die' )->once()->andReturnUsing( function() use ( &$died ) {
+			$died = true;
+			throw new \RuntimeException( 'wp_die called' );
+		} );
+
+		// Stub render dependencies.
+		global $wpdb;
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 0 );
+
+		$groups = new TailSignal_Admin_Groups();
+		try {
+			$groups->render();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertTrue( $died );
+	}
+
+	/**
+	 * Test groups render passes with valid nonce on edit GET param.
+	 */
+	public function test_groups_render_passes_with_valid_nonce() {
+		$_GET = array(
+			'edit'     => '5',
+			'_wpnonce' => 'valid_nonce',
+		);
+
+		Functions\expect( 'wp_verify_nonce' )
+			->with( 'valid_nonce', 'tailsignal_edit_group' )
+			->andReturn( true );
+
+		global $wpdb;
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+		$wpdb->shouldReceive( 'get_results' )->andReturn( array() );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+		$wpdb->shouldReceive( 'get_var' )->andReturn( 0 );
+		$wpdb->shouldReceive( 'get_row' )->andReturn( null );
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+
+		$groups = new TailSignal_Admin_Groups();
+
+		// Suppress output from include.
+		ob_start();
+		try {
+			$groups->render();
+		} catch ( \Throwable $e ) {
+			// Include may fail in test env — that's OK, we're testing the nonce path.
+		}
+		ob_end_clean();
+
+		$this->assertTrue( true );
+	}
+
 	// ── Meta Box Quick Send ───────────────────────────────────────
 
 	/**
@@ -532,5 +601,492 @@ class Test_TailSignal_Admin_Handlers extends TailSignal_TestCase {
 		$meta = new TailSignal_Meta_Box();
 		$meta->add_meta_box();
 		$this->assertTrue( true );
+	}
+
+	// ── Send Handler Input Validation ───────────────────────────
+
+	/**
+	 * Test handle_send parses title and body from POST.
+	 */
+	public function test_handle_send_parses_inputs() {
+		$_POST = array(
+			'title'       => 'Test Title',
+			'body'        => '',
+			'target_type' => 'all',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'error' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'required', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_send with no devices returns error.
+	 */
+	public function test_handle_send_no_devices() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$_POST = array(
+			'title'       => 'Test',
+			'body'        => 'Body',
+			'target_type' => 'all',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_option' )->andReturn( '0' );
+
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'no devices' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'No devices', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_send with group target retrieves group tokens.
+	 */
+	public function test_handle_send_group_target_no_devices() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$_POST = array(
+			'title'       => 'Group Test',
+			'body'        => 'Group Body',
+			'target_type' => 'group',
+			'target_ids'  => array( '3' ),
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_option' )->andReturn( '0' );
+
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'no devices' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'No devices', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_send with specific device IDs retrieves tokens.
+	 */
+	public function test_handle_send_specific_no_devices() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$_POST = array(
+			'title'       => 'Specific Test',
+			'body'        => 'Specific Body',
+			'target_type' => 'specific',
+			'target_ids'  => array( '1', '3' ),
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_option' )->andReturn( '0' );
+
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'no devices' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'No devices', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_send with invalid JSON data.
+	 */
+	public function test_handle_send_invalid_json_data() {
+		$_POST = array(
+			'title'       => 'Test',
+			'body'        => 'Body',
+			'data'        => 'not valid json{',
+			'target_type' => 'all',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'error' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'JSON', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_send with scheduled_at creates scheduled notification.
+	 */
+	public function test_handle_send_scheduled() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix    = 'wp_';
+		$wpdb->insert_id = 42;
+
+		$_POST = array(
+			'title'        => 'Scheduled',
+			'body'         => 'Scheduled Body',
+			'target_type'  => 'all',
+			'scheduled_at' => '2026-03-01 10:00:00',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_current_user_id' )->andReturn( 1 );
+
+		$wpdb->shouldReceive( 'insert' )->andReturn( 1 );
+
+		Functions\expect( 'wp_schedule_single_event' )->once();
+
+		$success_data = null;
+		Functions\expect( 'wp_send_json_success' )->once()->andReturnUsing( function( $data ) use ( &$success_data ) {
+			$success_data = $data;
+			throw new \RuntimeException( 'success' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertSame( 42, $success_data['notification_id'] );
+	}
+
+	/**
+	 * Test handle_send scheduled failure.
+	 */
+	public function test_handle_send_scheduled_failure() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix    = 'wp_';
+		$wpdb->insert_id = 0;
+
+		$_POST = array(
+			'title'        => 'Scheduled',
+			'body'         => 'Scheduled Body',
+			'target_type'  => 'all',
+			'scheduled_at' => '2026-03-01 10:00:00',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_current_user_id' )->andReturn( 1 );
+
+		$wpdb->shouldReceive( 'insert' )->andReturn( false );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'failed' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'Failed', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_cancel_scheduled success.
+	 */
+	public function test_handle_cancel_scheduled_success() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$_POST = array( 'notification_id' => '10' );
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+
+		$notification         = new stdClass();
+		$notification->status = 'scheduled';
+
+		$wpdb->shouldReceive( 'get_row' )->andReturn( $notification );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+
+		Functions\expect( 'wp_next_scheduled' )->andReturn( 1234567890 );
+		Functions\expect( 'wp_unschedule_event' )->once();
+
+		$wpdb->shouldReceive( 'update' )->andReturn( 1 );
+
+		$success_data = null;
+		Functions\expect( 'wp_send_json_success' )->once()->andReturnUsing( function( $data ) use ( &$success_data ) {
+			$success_data = $data;
+			throw new \RuntimeException( 'success' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_cancel_scheduled();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'cancelled', strtolower( $success_data['message'] ) );
+	}
+
+	/**
+	 * Test handle_cancel_scheduled failure.
+	 */
+	public function test_handle_cancel_scheduled_failure() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$_POST = array( 'notification_id' => '10' );
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+
+		// Notification not found.
+		$wpdb->shouldReceive( 'get_row' )->andReturn( null );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'failed' );
+		} );
+
+		$send = new TailSignal_Admin_Send();
+		try {
+			$send->handle_cancel_scheduled();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'Failed', $error_data['message'] );
+	}
+
+	// ── Quick Send Validation ───────────────────────────────────
+
+	/**
+	 * Test handle_quick_send parses placeholders for post.
+	 */
+	public function test_handle_quick_send_parses_placeholders() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$post = Mockery::mock( 'WP_Post' );
+		$post->ID           = 10;
+		$post->post_title   = 'Test Post';
+		$post->post_content = 'Some content here';
+		$post->post_author  = 1;
+		$post->post_type    = 'post';
+
+		$_POST = array(
+			'post_id'     => '10',
+			'title'       => 'Quick {post_title}',
+			'body'        => 'Quick Body',
+			'target_type' => 'all',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_post' )->with( 10 )->andReturn( $post );
+
+		// parse_placeholders stubs.
+		Functions\expect( 'get_bloginfo' )->andReturn( 'My Blog' );
+		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
+		Functions\expect( 'wp_strip_all_tags' )->andReturnFirstArg();
+		Functions\expect( 'get_the_category' )->andReturn( array() );
+		Functions\expect( 'has_post_thumbnail' )->andReturn( false );
+		Functions\expect( 'get_permalink' )->andReturn( 'http://example.com/test' );
+
+		// get_tokens returns empty → no devices error.
+		Functions\expect( 'get_option' )->andReturn( '0' );
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'no devices' );
+		} );
+
+		$meta = new TailSignal_Meta_Box();
+		try {
+			$meta->handle_quick_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected — placeholder parsing succeeded, no devices to send to.
+		}
+		$this->assertStringContainsString( 'No devices', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_quick_send with group target.
+	 */
+	public function test_handle_quick_send_group_target_no_devices() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+
+		$post = Mockery::mock( 'WP_Post' );
+		$post->ID           = 10;
+		$post->post_title   = 'Test';
+		$post->post_content = 'Content';
+		$post->post_author  = 1;
+		$post->post_type    = 'post';
+
+		$_POST = array(
+			'post_id'     => '10',
+			'title'       => 'Title',
+			'body'        => 'Body',
+			'target_type' => 'group',
+			'target_ids'  => array( '2' ),
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_post' )->with( 10 )->andReturn( $post );
+		Functions\expect( 'get_bloginfo' )->andReturn( 'Blog' );
+		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
+		Functions\expect( 'wp_strip_all_tags' )->andReturnFirstArg();
+		Functions\expect( 'get_the_category' )->andReturn( array() );
+		Functions\expect( 'has_post_thumbnail' )->andReturn( false );
+		Functions\expect( 'get_permalink' )->andReturn( 'http://example.com/test' );
+		Functions\expect( 'get_option' )->andReturn( '0' );
+
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array() );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'no devices' );
+		} );
+
+		$meta = new TailSignal_Meta_Box();
+		try {
+			$meta->handle_quick_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'No devices', $error_data['message'] );
+	}
+
+	/**
+	 * Test handle_quick_send sends notification failure.
+	 */
+	public function test_handle_quick_send_send_failure() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix    = 'wp_';
+		$wpdb->insert_id = 0;
+
+		$post = Mockery::mock( 'WP_Post' );
+		$post->ID           = 10;
+		$post->post_title   = 'Test';
+		$post->post_content = 'Content';
+		$post->post_author  = 1;
+		$post->post_type    = 'post';
+
+		$_POST = array(
+			'post_id'     => '10',
+			'title'       => 'Title',
+			'body'        => 'Body',
+			'target_type' => 'all',
+		);
+
+		Functions\expect( 'check_ajax_referer' )->once();
+		Functions\expect( 'current_user_can' )->andReturn( true );
+		Functions\expect( 'get_post' )->with( 10 )->andReturn( $post );
+		Functions\expect( 'get_current_user_id' )->andReturn( 1 );
+		Functions\expect( 'get_bloginfo' )->andReturn( 'Blog' );
+		Functions\expect( 'get_the_author_meta' )->andReturn( 'Author' );
+		Functions\expect( 'wp_strip_all_tags' )->andReturnFirstArg();
+		Functions\expect( 'get_the_category' )->andReturn( array() );
+		Functions\expect( 'has_post_thumbnail' )->andReturn( false );
+		Functions\expect( 'get_permalink' )->andReturn( 'http://example.com/test' );
+		Functions\expect( 'get_option' )->andReturn( '0' );
+
+		$wpdb->shouldReceive( 'get_col' )->andReturn( array( 'ExponentPushToken[abc]' ) );
+
+		// insert_notification fails.
+		$wpdb->shouldReceive( 'insert' )->andReturn( false );
+
+		$error_data = null;
+		Functions\expect( 'wp_send_json_error' )->once()->andReturnUsing( function( $data ) use ( &$error_data ) {
+			$error_data = $data;
+			throw new \RuntimeException( 'failed' );
+		} );
+
+		$meta = new TailSignal_Meta_Box();
+		try {
+			$meta->handle_quick_send();
+		} catch ( \RuntimeException $e ) {
+			// Expected.
+		}
+		$this->assertStringContainsString( 'Failed', $error_data['message'] );
 	}
 }

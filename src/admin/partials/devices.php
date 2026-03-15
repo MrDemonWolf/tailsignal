@@ -62,7 +62,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<button type="submit" class="button tailsignal-btn-brand"><?php esc_html_e( 'Upload & Import', 'tailsignal' ); ?></button>
 					<button type="button" class="button" id="tailsignal-import-cancel"><?php esc_html_e( 'Cancel', 'tailsignal' ); ?></button>
 				</div>
-				<span id="tailsignal-import-status" class="tw-text-sm tw-mt-2 tw-block"></span>
+				<span id="tailsignal-import-status" class="tw-text-sm tw-mt-2 tw-block" aria-live="polite"></span>
 			</form>
 		</div>
 	</div>
@@ -82,7 +82,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php endif; ?>
 
 	<!-- Edit Label Dialog (hidden) -->
-	<div id="tailsignal-edit-dialog" class="tw-fixed tw-inset-0 tailsignal-modal-overlay tw-flex tw-items-center tw-justify-center tw-z-50" style="display:none;">
+	<div id="tailsignal-edit-dialog" class="tw-fixed tw-inset-0 tailsignal-modal-overlay tw-flex tw-items-center tw-justify-center tw-z-50" style="display:none;" role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Edit Device Label', 'tailsignal' ); ?>">
 		<div class="tailsignal-modal-panel tw-w-96">
 			<div class="tailsignal-modal-header">
 				<h3><?php esc_html_e( 'Edit Device Label', 'tailsignal' ); ?></h3>

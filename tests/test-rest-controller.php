@@ -443,6 +443,78 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 	}
 
 	/**
+	 * Test import_devices rejects non-CSV extension.
+	 */
+	public function test_import_devices_rejects_non_csv() {
+		$request = Mockery::mock( 'WP_REST_Request' );
+		$request->shouldReceive( 'get_file_params' )->andReturn( array(
+			'file' => array(
+				'tmp_name' => '/tmp/test.txt',
+				'name'     => 'devices.php',
+			),
+		) );
+
+		$response = $this->controller->import_devices( $request );
+
+		$this->assertInstanceOf( 'WP_Error', $response );
+		$this->assertSame( 'tailsignal_invalid_file_type', $response->get_error_code() );
+	}
+
+	/**
+	 * Test rate limiting on register_device.
+	 */
+	public function test_register_device_rate_limited() {
+		// Simulate rate limit exceeded.
+		Functions\when( 'get_transient' )->alias( function() {
+			return 31;
+		} );
+
+		$request = Mockery::mock( 'WP_REST_Request' );
+
+		$response = $this->controller->register_device( $request );
+
+		$this->assertInstanceOf( 'WP_Error', $response );
+		$this->assertSame( 'tailsignal_rate_limited', $response->get_error_code() );
+	}
+
+	/**
+	 * Test rate limiting allows requests under threshold.
+	 */
+	public function test_register_device_rate_limit_allows() {
+		global $wpdb;
+
+		$wpdb = Mockery::mock( 'wpdb' );
+		$wpdb->prefix = 'wp_';
+		$wpdb->insert_id = 1;
+
+		// Under rate limit — return count of 5 for rate limit key.
+		Functions\when( 'get_transient' )->alias( function() {
+			return 5;
+		} );
+
+		Functions\expect( 'is_user_logged_in' )->andReturn( false );
+
+		$wpdb->shouldReceive( 'get_var' )->andReturn( null );
+		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );
+		$wpdb->shouldReceive( 'insert' )->andReturn( 1 );
+
+		$request = Mockery::mock( 'WP_REST_Request' );
+		$request->shouldReceive( 'get_param' )->with( 'expo_token' )->andReturn( 'ExponentPushToken[ratetest]' );
+		$request->shouldReceive( 'get_param' )->with( 'device_type' )->andReturn( 'ios' );
+		$request->shouldReceive( 'get_param' )->with( 'device_model' )->andReturn( '' );
+		$request->shouldReceive( 'get_param' )->with( 'os_version' )->andReturn( '' );
+		$request->shouldReceive( 'get_param' )->with( 'app_version' )->andReturn( '' );
+		$request->shouldReceive( 'get_param' )->with( 'locale' )->andReturn( '' );
+		$request->shouldReceive( 'get_param' )->with( 'timezone' )->andReturn( '' );
+		$request->shouldReceive( 'get_param' )->with( 'user_label' )->andReturn( null );
+
+		$response = $this->controller->register_device( $request );
+
+		$this->assertInstanceOf( 'WP_REST_Response', $response );
+		$this->assertSame( 201, $response->get_status() );
+	}
+
+	/**
 	 * Test import_devices with valid CSV file.
 	 */
 	public function test_import_devices_valid_csv() {
@@ -459,7 +531,8 @@ class Test_TailSignal_REST_Controller extends TailSignal_TestCase {
 		fputcsv( $tmp, array( 'ExponentPushToken[import1]', 'ios', 'iPhone', '18', '1.0', 'en', 'UTC', 'Test', '0', '2025-01-01' ), ',', '"', '\\' );
 		rewind( $tmp );
 
-		// import_devices calls - get_device_by_token check, insert for new.
+		// import_devices calls - transaction + get_device_by_token check, insert for new.
+		$wpdb->shouldReceive( 'query' )->andReturn( true );
 		$wpdb->shouldReceive( 'get_row' )->andReturn( null );
 		$wpdb->shouldReceive( 'get_var' )->andReturn( null );
 		$wpdb->shouldReceive( 'prepare' )->andReturn( '' );

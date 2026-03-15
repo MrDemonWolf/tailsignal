@@ -75,6 +75,7 @@ class TailSignal {
 		$this->loader->add_action( 'admin_menu', $admin, 'add_menu_pages' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_footer', $admin, 'maybe_add_dark_theme_attr' );
 
 		// Settings.
 		$settings = new TailSignal_Admin_Settings();
