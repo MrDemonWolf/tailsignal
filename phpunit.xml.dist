@@ -10,4 +10,15 @@
 			<directory suffix=".php" prefix="test-">tests</directory>
 		</testsuite>
 	</testsuites>
+	<coverage processUncoveredFiles="true">
+		<include>
+			<directory suffix=".php">src/includes</directory>
+			<directory suffix=".php">src/admin</directory>
+			<directory suffix=".php">src/rest-api</directory>
+		</include>
+		<exclude>
+			<directory suffix=".php">src/vendor</directory>
+			<directory suffix=".php">src/admin/partials</directory>
+		</exclude>
+	</coverage>
 </phpunit>

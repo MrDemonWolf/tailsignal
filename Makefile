@@ -1,4 +1,4 @@
-.PHONY: zip test clean css
+.PHONY: zip test clean css coverage lint lint-fix
 
 COMPOSER := $(shell command -v composer 2>/dev/null || echo php composer.phar)
 
@@ -19,6 +19,19 @@ zip:
 test:
 	$(COMPOSER) install --quiet
 	./vendor/bin/phpunit
+
+coverage:
+	$(COMPOSER) install --quiet
+	./vendor/bin/phpunit --coverage-html build/coverage
+	@echo "Coverage report: build/coverage/index.html"
+
+lint:
+	$(COMPOSER) install --quiet
+	./vendor/bin/phpcs
+
+lint-fix:
+	$(COMPOSER) install --quiet
+	./vendor/bin/phpcbf
 
 clean:
 	rm -rf build/
